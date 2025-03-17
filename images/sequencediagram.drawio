@@ -1,0 +1,13 @@
+<mxfile host="65bd71144e">
+    <diagram id="JTCAhkasqgtm2JRm6CPM" name="Page-1">
+        <mxGraphModel dx="730" dy="1601" grid="1" gridSize="30" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1654" pageHeight="1169" background="none" math="0" shadow="0" adaptiveColors="auto">
+            <root>
+                <mxCell id="0"/>
+                <mxCell id="1" parent="0"/>
+                <mxCell id="2" value="%%{init: {&#39;theme&#39;: &#39;base&#39;, &#39;themeVariables&#39;: { &#39;primaryColor&#39;: &#39;#ADD8E6&#39;, &#39;fontSize&#39;: &#39;16px&#39;, &#39;fontWeight&#39;: &#39;bold&#39;, &#39;lineColor&#39;: &#39;#0000FF&#39; }}}%%&#xa;sequenceDiagram&#xa;    autonumber&#xa;    participant CtrlX as CtrlX-Nodes (Simulated/Real)&#xa;    participant Extract as ETL-Extract&#xa;    participant Solace as Solace-Broker&#xa;    participant Transform as ETL-Transform&#xa;    participant Load as ETL-Load&#xa;    participant DB as Postgres-DB&#xa;    participant InfluxDB as InfluxDB&#xa;    participant Telegraf as Telegraf&#xa;    participant DagsterWeb as Dagster-Webserver&#xa;    participant DagsterDaemon as Dagster-Daemon&#xa;    participant Grafana as Grafana&#xa;&#xa;    %% Initial CtrlX Configuration&#xa;    alt Simulation in Docker&#xa;        Extract-&gt;&gt;CtrlX: Connects to simulated server&#xa;    else Real CtrlX&#xa;        Extract-&gt;&gt;CtrlX: Connects to physical server&#xa;    end&#xa;&#xa;    %% Data Flow in ETL&#xa;    Extract-&gt;&gt;Solace: Publishes data to opcua/data&#xa;    Solace-&gt;&gt;Transform: Transform subscribes to opcua/data&#xa;    Transform-&gt;&gt;Solace: Publishes transformed data to ctrlx/transformed&#xa;    Solace-&gt;&gt;Load: Load subscribes to ctrlx/transformed&#xa;    Load-&gt;&gt;DB: Saves data to PostgreSQL (batch of 10,000 records)&#xa;&#xa;    %% Monitoring and Backups&#xa;    Telegraf-&gt;&gt;InfluxDB: Publishes monitoring data (expires in 30 days)&#xa;    Grafana-&gt;&gt;InfluxDB: Queries and visualizes data&#xa;&#xa;    %% Orchestration with Dagster&#xa;    DagsterWeb-&gt;&gt;DagsterDaemon: Coordinates and restarts services&#xa;    DagsterDaemon-&gt;&gt;Extract: Monitors Extract execution&#xa;    DagsterDaemon-&gt;&gt;Transform: Monitors Transform execution&#xa;    DagsterDaemon-&gt;&gt;Load: Monitors Load execution" style="shadow=0;dashed=0;align=left;strokeWidth=1;shape=mxgraph.mermaid.abstract.mermaid;labelBackgroundColor=#ffffff;noLabel=1;theme=default;rounded=0;" parent="1" vertex="1">
+                    <mxGeometry x="44" y="-1060" width="1610" height="840" as="geometry"/>
+                </mxCell>
+            </root>
+        </mxGraphModel>
+    </diagram>
+</mxfile>

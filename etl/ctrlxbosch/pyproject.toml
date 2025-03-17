@@ -1,0 +1,23 @@
+[tool.poetry]
+name = "ctrlxbosch"
+version = "0.0.1"
+description = "Simulated CtrlX nodes publishing data to Solace"
+authors = ["Manuel Caipo <manuel.caipo@boschrexroth.de>"]
+
+[tool.poetry.dependencies]
+python = "3.10.11"
+opcua = "^0.98.13"
+loguru = "^0.7.0"
+pyyaml = "^6.0.2"
+sqlalchemy = "^2.0.37"
+psycopg = {extras = ["binary"], version = "^3.2.4"}
+cryptography = "^44.0.0"
+dagster = "^1.9.10"
+dagster-webserver = "^1.9.10"
+dagster-postgres = "^0.25.10"
+dagster-docker = "^0.25.10"
+solace-pubsubplus = "1.8.0"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"

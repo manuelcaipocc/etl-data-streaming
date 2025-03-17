@@ -1,0 +1,82 @@
+etl/
+├── ConnectionManager.py
+├── config.yaml
+├── ctrlxbosch/
+│    ├── Dockerfile
+│    ├── ctrlxbosch/
+│    │    ├── __init__.py
+│    │    └── main.py
+│    ├── mock_server.py
+│    ├── poetry.lock
+│    └── pyproject.toml
+├── dagsterbosch/
+│    ├── .nux/
+│    │    └── nux.yaml
+│    ├── .telemetry/
+│    │    └── id.yaml
+│    ├── Dockerfile
+│    ├── __init__.py
+│    ├── dagster.yaml
+│    ├── dagsterbosch/
+│    │    ├── __init__.py
+│    │    └── main.py
+│    ├── jobs/
+│    │    ├── __init__.py
+│    │    └── etl_jobs.py
+│    ├── logs/
+│    ├── poetry.lock
+│    ├── pyproject.toml
+│    ├── resources/
+│    │    ├── __init__.py
+│    │    ├── database_resources.py
+│    │    └── docker_resources.py
+│    ├── schedules/
+│    │    └── schedules.db
+│    ├── sensors/
+│    │    ├── __init__.py
+│    │    ├── solace_load_sensor.py
+│    │    └── solace_transform_sensor.py
+│    └── workspace.yaml
+├── data/
+│    ├── input/
+│    │    ├── ctrlx/
+│    │    └── extract/
+│    ├── logs/
+│    └── processed/
+├── docker-compose.yaml
+├── extractbosch/
+│    ├── Dockerfile
+│    ├── extract.py
+│    ├── extractbosch/
+│    │    ├── __init__.py
+│    │    └── main.py
+│    ├── poetry.lock
+│    └── pyproject.toml
+├── grafana_querys/
+│    └── graph.sql
+├── loadbosch/
+│    ├── Dockerfile
+│    ├── load.py
+│    ├── loadbosch/
+│    │    ├── __init__.py
+│    │    └── main.py
+│    ├── poetry.lock
+│    └── pyproject.toml
+├── postgresbosch/
+│    ├── init.sql
+│    └── update_schema.sql
+├── solacebosch/
+│    └── solace_start.sh
+├── telegrafbosch/
+│    ├── telegraf.conf
+│    └── transform_sensors.star
+├── transformbosch/
+│    ├── Dockerfile
+│    ├── format.yaml
+│    ├── poetry.lock
+│    ├── pyproject.toml
+│    ├── transform.py
+│    └── transformbosch/
+│        ├── __init__.py
+│        └── main.py
+└── utils.py

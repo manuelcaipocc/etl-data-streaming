@@ -1,0 +1,13 @@
+<mxfile host="65bd71144e">
+    <diagram id="JTCAhkasqgtm2JRm6CPM" name="Page-1">
+        <mxGraphModel dx="730" dy="1601" grid="1" gridSize="30" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1654" pageHeight="1169" background="none" math="0" shadow="0" adaptiveColors="auto">
+            <root>
+                <mxCell id="0"/>
+                <mxCell id="1" parent="0"/>
+                <mxCell id="2" value="%%{init: {&#39;theme&#39;: &#39;base&#39;, &#39;themeVariables&#39;: { &#39;primaryColor&#39;: &#39;#ADD8E6&#39;, &#39;fontSize&#39;: &#39;16px&#39;, &#39;fontWeight&#39;: &#39;bold&#39;, &#39;lineColor&#39;: &#39;#0000FF&#39; }, &#39;flowchart&#39;: { &#39;htmlLabels&#39;: true, &#39;useMaxWidth&#39;: false, &#39;wrap&#39;: true }}}%%&#xa;graph LR&#xa;    A[Start] --&gt; B{Simulation in &lt;br&gt; Docker}&#xa;    B -- Yes --&gt; C[Connect to &lt;br&gt; the simulated &lt;br&gt; server]&#xa;    B -- No --&gt; D[Connect to &lt;br&gt; the physical &lt;br&gt; server]&#xa;&#xa;    C --&gt; E{Did Extract &lt;br&gt; receive &lt;br&gt; data?}&#xa;    D --&gt; E&#xa;    E -- Yes --&gt; F[Extract publishes &lt;br&gt; data to Solace &lt;br&gt; on opcua/data]&#xa;    E -- No --&gt; R[Dagster-Daemon &lt;br&gt; restarts &lt;br&gt; Extract]&#xa;    R --&gt; E&#xa;&#xa;    F --&gt; G[Transform subscribes &lt;br&gt; to opcua/data]&#xa;    G --&gt; H[Publish transformed &lt;br&gt; data to Solace &lt;br&gt; on ctrlx/transformed]&#xa;    H --&gt; I[Load subscribes &lt;br&gt; to ctrlx/transformed]&#xa;    I --&gt; J[Store data in &lt;br&gt; PostgreSQL batch &lt;br&gt; of 10,000 records]&#xa;&#xa;    J --&gt; K[Telegraf publishes &lt;br&gt; monitoring data &lt;br&gt; expires in 30 days]&#xa;    K --&gt; L[Grafana queries &lt;br&gt; and visualizes &lt;br&gt; data]&#xa;&#xa;    L --&gt; M[Dagster-Webserver &lt;br&gt; coordinates and &lt;br&gt; restarts services]&#xa;    M --&gt; N[Dagster-Daemon &lt;br&gt; monitors the &lt;br&gt; execution of Extract]&#xa;    N --&gt; O[Dagster-Daemon &lt;br&gt; monitors the &lt;br&gt; execution of Transform]&#xa;    O --&gt; P[Dagster-Daemon &lt;br&gt; monitors the &lt;br&gt; execution of Load]&#xa;" style="shadow=0;dashed=0;align=left;strokeWidth=1;shape=mxgraph.mermaid.abstract.mermaid;labelBackgroundColor=#ffffff;noLabel=1;theme=default;rounded=0;fillColor=#81E6FF;" parent="1" vertex="1">
+                    <mxGeometry x="44" y="-1060" width="1610" height="840" as="geometry"/>
+                </mxCell>
+            </root>
+        </mxGraphModel>
+    </diagram>
+</mxfile>

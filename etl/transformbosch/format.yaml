@@ -1,0 +1,28 @@
+transformations:
+
+  - NodeId: "ns=2;s=plc/app/Application/sym/PLC_PRG/bBlink"  
+    NamespaceIndex: 2
+    RouteName: "plc/app/Application/sym/PLC_PRG/bBlink"
+    BrowseName: "bBlink"
+    Level: 8
+    DataType: "String"
+    
+
+  - NodeId: "ns=2;s=plc/app/Application/sym/PLC_PRG/bBlinkOld"  
+    NamespaceIndex: 2
+    RouteName: "plc/app/Application/sym/PLC_PRG/bBlinkOld"
+    BrowseName: "bBlinkOld"
+    Level: 8
+
+  - NodeId: "ns=2;s=plc/app/Application/sym/PLC_PRG/bStartOpModeChange" 
+    NamespaceIndex: 2
+    RouteName: "plc/app/Application/sym/PLC_PRG/bStartOpModeChange"
+    BrowseName: "bStartOpModeChange"
+    Level: 8
+
+  
+
+  # - NodeId: "ns=2;s=Speed"
+  #   BrowseName: "Speed"
+  #   DataType: "Float"
+  #   Factor: 2.0

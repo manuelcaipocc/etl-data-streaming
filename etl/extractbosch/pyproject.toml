@@ -1,0 +1,27 @@
+[tool.poetry]
+name = "extractbosch"
+version = "0.0.1"
+description = "Extract data from CtrlX nodes and publish to Solace"
+authors = ["Manuel Caipo <manuel.caipo@boschrexroth.de>"]
+
+[tool.poetry.dependencies]
+python = "3.10.11"
+opcua = "^0.98.13"
+pyserial = "^3.5"
+pymodbus = "^2.5.3"
+loguru = "^0.7.0"
+requests = "^2.32.3"
+pyyaml = "^6.0.2"
+psycopg = {extras = ["binary"], version = "^3.2.4"}
+sqlalchemy = "^2.0.37"
+cryptography = "^44.0.0"
+dagster = "^1.9.10"
+dagster-webserver = "^1.9.10"
+dagster-postgres = "^0.25.10"
+dagster-docker = "^0.25.10"
+paho-mqtt = "^2.1.0"
+solace-pubsubplus = "1.8.0"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"

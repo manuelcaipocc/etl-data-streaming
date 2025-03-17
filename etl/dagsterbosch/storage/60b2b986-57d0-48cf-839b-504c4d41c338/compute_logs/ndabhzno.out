@@ -1,0 +1,7 @@
+extract_job - 60b2b986-57d0-48cf-839b-504c4d41c338 - 37783 - LOGS_CAPTURED - Started capturing logs in process (pid: 37783).
+extract_job - 60b2b986-57d0-48cf-839b-504c4d41c338 - 37783 - start_extract - STEP_START - Started execution of step "start_extract".
+extract_job - 60b2b986-57d0-48cf-839b-504c4d41c338 - start_extract - Verificando estado del contenedor etl-extract...
+extract_job - 60b2b986-57d0-48cf-839b-504c4d41c338 - start_extract - El contenedor etl-extract ya está en ejecución.
+extract_job - 60b2b986-57d0-48cf-839b-504c4d41c338 - 37783 - start_extract - STEP_OUTPUT - Yielded output "result" of type "Any". (Type check passed).
+extract_job - 60b2b986-57d0-48cf-839b-504c4d41c338 - 37783 - start_extract - HANDLED_OUTPUT - Handled output "result" using IO manager "io_manager"
+extract_job - 60b2b986-57d0-48cf-839b-504c4d41c338 - 37783 - start_extract - STEP_SUCCESS - Finished execution of step "start_extract" in 623ms.

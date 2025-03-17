@@ -1,101 +1,226 @@
-<!---
+# ETL Project for CtrlX (Bosch Rexroth)
 
-	Copyright (c) 2009, 2018 Robert Bosch GmbH and its subsidiaries.
-	This program and the accompanying materials are made available under
-	the terms of the Bosch Internal Open Source License v4
-	which accompanies this distribution, and is available at
-	http://bios.intranet.bosch.com/bioslv4.txt
+This application allows extracting data from any **CtrlX (Bosch Rexroth)** to a database. Currently, the data is stored in a local **PostgreSQL** database, but it can be easily migrated to a cloud service without issues.
 
--->
+## Table of Contents
 
-# Project Name  <!-- omit in toc -->
+1. [Project Structure](#1-project-structure)
+2. [Prerequisites](#2-prerequisites)
+3. [Execution](#3-execution)
+4. [User and Password Verification](#4-user-and-password-verification)
+5. [Configuration File (config.yaml)](#5-configuration-file-configyaml)
+    - 5.1 [OPC UA Configuration](#51-opc-ua-configuration)
+    - 5.2 [Nodes Configuration](#52-nodes-configuration)
+    - 5.3 [Solace Configuration](#53-solace-configuration)
+    - 5.4 [PostgreSQL Configuration](#54-postgresql-configuration)
+6. [Testing OPC UA Connection](#6-testing-opc-ua-connection)
+7. [Repository](#7-repository)
+8. [Contact Information](#8-contact-information)
 
-[![License: BIOSL v4](http://bios.intranet.bosch.com/bioslv4-badge.svg)](#license)
-
-Add a brief description about the contents of this repository here.
-Consider linking to existing documentation.
-
-## Table of Contents  <!-- omit in toc -->
-
-- [Getting Started](#getting-started)
-- [Building and Testing](#building-and-testing)
-- [Contribution Guidelines](#contribution-guidelines)
-- [Configure Git and correct EOL handling](#configure-Git-and-correct-EOL-handling)
-- [Feedback](#feedback)
-- [About](#about)
-  - [Maintainers](#maintainers)
-  - [Contributors](#contributors)
-  - [3rd Party Licenses](#3rd-party-licenses)
-  - [Used Encryption](#used-encryption)
-  - [License](#license)
-
-## Getting Started <a name="getting-started"></a>
-
-This section should contain information on how to use the content of this
-repository. If it contains SW, consider explaining how it is installed, run or integrated.
-
-## Building and Testing <a name="building-and-testing"></a>
-
-If the repository contains SW, add instructions on how to build it from source
-and test it in this section.
-
-## Contribution Guidelines <a name="contribution-guidelines"></a>
-
-Use this section to describe or link to documentation which explaining how users can make contributions to the contents of this repository. Consider adopting the [BIOS way of facilitating contributions](http://bos.ch/ygF).
-
-## Configure Git and correct EOL handling <a name="configure-Git-and-correct-EOL-handling"></a>
-Here you can find the references for [Dealing with line endings](https://help.github.com/articles/dealing-with-line-endings/ "Wiki page from Social Coding"). 
-
-Every time you press return on your keyboard you're actually inserting an invisible character called a line ending. Historically, different operating systems have handled line endings differently.
-When you view changes in a file, Git handles line endings in its own way. Since you're collaborating on projects with Git and GitHub, Git might produce unexpected results if, for example, you're working on a Windows machine, and your collaborator has made a change in OS X.
-
-To avoid problems in your diffs, you can configure Git to properly handle line endings. If you are storing the .gitattributes file directly inside of your repository, than you can asure that all EOL are manged by git correctly as defined.
+## 1. Project Structure
 
 
-## Feedback <a name="feedback"></a>
+The following scheme represents the project structure:
 
-Consider using this section to describe how you would like other developers
-to get in contact with you or provide feedback.
+```plaintext
+etl_project/
+├── ctrlxbosch/                  # Simulated CtrlX OPC UA server
+│   ├── Dockerfile               # Docker container configuration
+│   ├── mock_server.py           # OPC UA server simulation script
+│   ├── pyproject.toml           # Poetry dependencies
+│   └── poetry.lock
+├── dagsterbosch/                # Dagster orchestration
+│   ├── Dockerfile
+│   ├── workspace.yaml           # Dagster workspace configuration
+│   └── etl_jobs.py              # ETL job definitions
+├── extractbosch/                # ETL: Data extraction
+│   ├── Dockerfile
+│   ├── extract.py               # Data extraction script
+│   ├── pyproject.toml
+│   └── poetry.lock
+├── transformbosch/              # ETL: Data transformation
+│   ├── Dockerfile
+│   ├── transform.py             # Data transformation script
+│   ├── pyproject.toml
+│   └── poetry.lock
+├── loadbosch/                   # ETL: Data loading to PostgreSQL
+│   ├── Dockerfile
+│   ├── load.py                  # Data loading script
+│   ├── pyproject.toml
+│   └── poetry.lock
+├── solacebosch/                 # Solace Broker configuration
+│   ├── Dockerfile
+│   └── solace_config.json       # Solace broker configuration
+├── oracledbbosch/               # PostgreSQL DB initialization
+│   └── init.sql                 # SQL script for database schema initialization
+├── data/                        # Data directories for logs and inputs
+│   ├── input/                   # Input data for ETL
+│   ├── logs/                    # Service logs
+│   └── processed/               # Processed data outputs
+├── docker-compose.yml           # Docker Compose file for orchestration
+└── README.md                    # Project documentation
+```
+<p style="font-size: 12px; opacity: 0.5; text-align: left;">
+    <a href="#table-of-contents">⬆ Back to Table of Contents</a>
+</p>
 
-## About <a name="about"></a>
+## 2. Prerequisites
 
-### Maintainers <a name="maintainers"></a>
+To run this project, ensure you have the following installed:
 
-List the maintainers of this repository here. Consider linking to their Bosch Connect profile pages. Mention or link to their email as a minimum.
+- **Developer Bosch Computer**  
+  [Access to Bosch internal documentation](https://service-management.bosch.tech/sp?id=search_itsp&spa=1&t=rsc&q=bcn%20to%20internet%20client)
+- **Docker**: Container orchestration
 
-### Contributors <a name="contributors"></a>
+<p style="font-size: 12px; opacity: 0.5; text-align: left;">
+    <a href="#table-of-contents">⬆ Back to Table of Contents</a>
+</p>
 
-Consider listing contributors in this section to give explicit credit. You could also ask contributors to add themselves in this file on their own.
+## 3. Execution
 
-### 3rd Party Licenses <a name="3rd-party-licenses"></a>
+To start the ETL pipeline, execute the following commands:
 
-You must mention all 3rd party licenses (e.g. OSS) licenses used by your
-project here. Example:
+```sh
+# Start Docker containers
+docker-compose up -d
+```
+<p style="font-size: 12px; opacity: 0.5; text-align: left;">
+    <a href="#table-of-contents">⬆ Back to Table of Contents</a>
+</p>
 
-| Name | License | Type |
-|------|---------|------|
-| [Apache Felix](http://felix.apache.org/) | [Apache 2.0 License](http://www.apache.org/licenses/LICENSE-2.0.txt) | Dependency
+## 4. User and Password Verification
 
-### Used Encryption <a name="used-encryption"></a>
+To verify the necessary users and passwords to access and use the service on the host, check the **`docker-compose.yaml`** file.
 
-Declaration of the usage of any encryption (see BIOS Repository Policy §4.a).
+<p style="font-size: 12px; opacity: 0.5; text-align: left;">
+    <a href="#table-of-contents">⬆ Back to Table of Contents</a>
+</p>
 
-### License <a name="license"></a>
+## 5. Configuration File (config.yaml)
 
-[![License: BIOSL v4](http://bios.intranet.bosch.com/bioslv4-badge.svg)](#license)
+The `config.yaml` file contains all the configurations required to connect the ETL system to the **CtrlX OPC UA Server**, **Solace Message Broker**, and **PostgreSQL Database**.
 
-> Copyright (c) 2009, 2018 Robert Bosch GmbH and its subsidiaries.
-> This program and the accompanying materials are made available under
-> the terms of the Bosch Internal Open Source License v4
-> which accompanies this distribution, and is available at
-> http://bios.intranet.bosch.com/bioslv4.txt
+### 5.1 **OPC UA Configuration**
+```yaml
+opcua:
+  server_url_server: "opc.tcp://0.0.0.0:4840"
+  server_url_client: "opc.tcp://192.168.1.1:4840"
+  namespace: 192.168.1.1
+  username: "boschrexroth"
+  password: "Boschrexroth1"
+  interface: 15
+  security_mode: "SignAndEncrypt"
+  security_policy: "Basic256Sha256"
+  private_key_path: "/certs/client-key.pem"
+  timeout: 10
+  update_interval: 1
+  retries: 10
+  retry_delay: 4
+```
+#### Explanation:
+- **server_url_server**: The OPC UA server URL (localhost for simulation).
+- **server_url_client**: The real CtrlX OPC UA URL.
+- **namespace**: The namespace index for the OPC UA nodes.
+- **username/password**: Authentication credentials.
+- **interface**: Network interface index.
+- **security_mode/security_policy**: Defines encryption settings.
+- **private_key_path**: Path to the private key for secure connection.
+- **timeout/update_interval/retries/retry_delay**: Network and reconnection settings.
 
-<!---
+### 5.2 **Nodes Configuration**
+```yaml
+  nodes:
+    - NodeId: "ns=2;s=plc/app/Application/sym/GVL_HMI/P_s"
+      NamespaceIndex: 2
+      RouteName: "plc/app/Application/sym/GVL_HMI/P_s"
+      BrowseName: "P_s"
+      Level: 8
+      update_interval: 100
+```
+#### Explanation:
+- **NodeId**: Unique identifier for the OPC UA node.
+- **NamespaceIndex**: Defines the namespace.
+- **RouteName**: Path of the node in the PLC.
+- **BrowseName**: Human-readable name.
+- **Level**: Defines its hierarchy level.
+- **update_interval**: Frequency of updates (in milliseconds).
 
-	Copyright (c) 2009, 2018 Robert Bosch GmbH and its subsidiaries.
-	This program and the accompanying materials are made available under
-	the terms of the Bosch Internal Open Source License v4
-	which accompanies this distribution, and is available at
-	http://bios.intranet.bosch.com/bioslv4.txt
+### 5.3 **Solace Configuration**
+```yaml
+solace:
+  host: solace-broker
+  port: 55555
+  username: admin
+  password: admin
+  vpn: default
+  topics:
+    raw_data: [opcua/data]
+    transformed_data: [ctrlx/transformed]
+```
+#### Explanation:
+- **host/port**: Address and port of the Solace broker.
+- **username/password**: Credentials for Solace.
+- **vpn**: Virtual Private Network (default setting).
+- **topics**: Defines message topics for raw and transformed data.
 
--->
+### 5.4 **PostgreSQL Configuration**
+```yaml
+postgres:
+  host: postgres-db
+  port: 5432
+  user: boschrexroth
+  password: boschrexroth
+  db: automax
+  schema: sandbox
+  table: ctrlx_data
+  write_interval: 600
+  batch_size: 10000
+```
+#### 5.5 Explanation:
+- **host/port**: PostgreSQL database connection.
+- **user/password**: Authentication credentials.
+- **db/schema/table**: Defines database, schema, and table used.
+- **write_interval**: Time interval (in seconds) between batch writes.
+- **batch_size**: Number of records per batch insertion.
+
+<p style="font-size: 12px; opacity: 0.5; text-align: left;">
+    <a href="#table-of-contents">⬆ Back to Table of Contents</a>
+</p>
+
+## 6. Testing OPC UA Connection
+
+Inside the `src/` directory, there is a Jupyter Notebook that allows testing the connection to a real **CtrlX OPC UA** server. This notebook extracts all available OPC UA nodes and stores them in a JSON file.
+
+### 6.1 **Location of the notebook**
+```plaintext
+src/
+├── opcua_test.ipynb   # Notebook for testing OPC UA connection
+└── nodos_opcua.json   # Extracted OPC UA nodes
+```
+<p style="font-size: 12px; opacity: 0.5; text-align: left;">
+    <a href="#table-of-contents">⬆ Back to Table of Contents</a>
+</p>
+
+## 7. Repository
+
+The source code for this project is available in the following Bitbucket repository:
+
+[ETL Process - CtrlX Repository](https://sourcecode.socialcoding.bosch.com/projects/SSD6TRAINING/repos/etl-process---ctrl-x/browse)
+
+<p style="font-size: 12px; opacity: 0.5; text-align: left;">
+    <a href="#table-of-contents">⬆ Back to Table of Contents</a>
+</p>
+
+## 8. Contact Information
+
+For any inquiries regarding the project, please contact the main users:
+
+| **Main User** | **Responsibilities** |
+|--------------|----------------------|
+| **Caipo Manuel (DC/SSD3)**          | Working Student/Developer |
+| **Guedria Mohamed Amine (DC/SSD6)** | Trainer / SW Engineer |
+
+
+<p style="font-size: 12px; opacity: 0.5; text-align: left;">
+    <a href="#table-of-contents">⬆ Back to Table of Contents</a>
+</p>

@@ -1,0 +1,17 @@
+# dagster.yaml configuration for schedules
+run_coordinator:
+  module: dagster._core.run_coordinator
+  class: QueuedRunCoordinator
+
+scheduler:
+  module: dagster._core.scheduler
+  class: DagsterDaemonScheduler
+
+python_logs:
+  dagster_handler_config:
+    handlers:
+      console:
+        class: logging.StreamHandler
+        stream: ext://sys.stdout
+  python_log_level: INFO
+

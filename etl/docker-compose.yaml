@@ -1,0 +1,274 @@
+services:
+  postgres-db:  
+    image: postgres:17.4  
+    container_name: postgres-db
+    environment:
+      POSTGRES_USER: boschrexroth  
+      POSTGRES_PASSWORD: boschrexroth  
+      POSTGRES_DB: automax 
+    mem_limit: 500g  
+    ports:
+      - "5432:5432"  
+    volumes:
+      - postgres_data:/var/lib/postgresql/data  
+      - ./postgresbosch/init.sql:/docker-entrypoint-initdb.d/init.sql 
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U boschrexroth -d automax"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: always
+    networks:
+      - dockernet
+
+  solace-broker:  
+    image: solace/solace-pubsub-standard:10.10.1.112
+    container_name: solace-broker
+    environment:
+      - username_admin_globalaccesslevel=admin
+      - username_admin_password=admin
+      - solace_feature_mqtt=true
+      - solace_vpn=default
+      - solace_mqtt_port=1883  
+      - solace_mqtt_ws_port=8000  
+    ports:
+      - "8080:8080"
+      - "55555:55555"
+      - "1883:1883"
+      - "9000:9000"
+      - "8008:8008"
+      - "8000:8000"
+      - "5672:5672"
+      - "2222:2222"
+      - "1943:1943"
+    volumes:
+      - ./data/logs/solace:/var/log/solace
+    shm_size: "2g"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://127.0.0.1:8080"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    restart: always
+    networks:
+      - dockernet
+
+
+  influxdb:
+    image: influxdb:2.7.1
+    container_name: influxdb
+    environment:
+      - DOCKER_INFLUXDB_INIT_MODE=setup
+      - DOCKER_INFLUXDB_INIT_USERNAME=admin
+      - DOCKER_INFLUXDB_INIT_PASSWORD=admin123
+      - DOCKER_INFLUXDB_INIT_ORG=boschrexroth
+      - DOCKER_INFLUXDB_INIT_BUCKET=mqtt_data
+      - DOCKER_INFLUXDB_INIT_RETENTION=30d
+      - DOCKER_INFLUXDB_INIT_ADMIN_TOKEN=supersecrettoken
+      - DOCKER_INFLUXDB_INIT_RETENTION=30d
+
+    ports:
+      - "8086:8086"
+    volumes:
+      - influxdb_data:/var/lib/influxdb2
+    restart: always
+    depends_on:
+      solace-broker:
+        condition: service_started
+    networks:
+      - dockernet
+
+  telegraf:
+    image: telegraf:1.33.2
+    container_name: telegraf
+    volumes:
+      - ./telegrafbosch/telegraf.conf:/etc/telegraf/telegraf.conf
+      - ./telegrafbosch/transform_sensors.star:/etc/telegraf/transform_sensors.star
+    depends_on:
+      - influxdb
+      - solace-broker
+    restart: always
+    networks:
+      - dockernet
+
+  grafana:
+    image: grafana/grafana:11.5.2
+    container_name: grafana
+    ports:
+      - "3001:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - grafana_data:/var/lib/grafana
+    restart: always
+    depends_on:
+      - solace-broker
+    networks:
+      - dockernet
+
+
+  ctrlx-nodes:  # Simulated CtrlX OPC UA Server
+    build: ./ctrlxbosch
+    container_name: ctrlx-nodes
+    environment:
+      - NODE_ENV=production
+    ports:
+      - "4840:4840"
+    volumes:
+      - ./config.yaml:/app/config.yaml
+      - ./utils.py:/app/utils.py
+      - ./ConnectionManager.py:/app/ConnectionManager.py
+      - ./data/logs/ctrlx:/app/logs
+      - ./data/input/ctrlx:/app/input
+    command: ["poetry", "run", "python", "mock_server.py"]
+    restart: always
+    depends_on:
+      solace-broker:
+        condition: service_started
+    networks:
+      - dockernet
+
+  dagster-webserver:  # Dagster Orchestrator (Interfaz Web)
+    build: ./dagsterbosch
+    container_name: dagster-webserver
+    environment:
+      - DAGSTER_HOME=/opt/dagster/app
+      - DAGSTER_POSTGRES_HOST=postgres-db
+      - DAGSTER_DOCKER_IMAGE=dagsterbosch
+      - POSTGRES_USER=boschrexroth
+      - POSTGRES_PASSWORD=boschrexroth
+      - POSTGRES_DB=automax
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./config.yaml:/app/config.yaml
+      - ./utils.py:/app/utils.py
+      - ./ConnectionManager.py:/app/ConnectionManager.py
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./dagsterbosch:/opt/dagster/app
+      - ./data/logs/dagster:/opt/dagster/logs
+    restart: always
+    command: ["poetry", "run", "dagster-webserver", "--host", "0.0.0.0", "--port", "3000"]
+    depends_on:
+      postgres-db:
+        condition: service_healthy
+      etl-extract:
+        condition: service_started
+      solace-broker:
+        condition: service_started
+    networks:
+      - dockernet
+
+  dagster-daemon: 
+    build: ./dagsterbosch
+    container_name: dagster-daemon
+    environment:
+      - DAGSTER_HOME=/opt/dagster/app
+      - DAGSTER_POSTGRES_HOST=postgres-db
+      - DAGSTER_DOCKER_IMAGE=dagsterbosch
+      - POSTGRES_USER=boschrexroth
+      - POSTGRES_PASSWORD=boschrexroth
+      - POSTGRES_DB=automax
+    volumes:
+      - ./config.yaml:/app/config.yaml
+      - ./utils.py:/app/utils.py
+      - ./ConnectionManager.py:/app/ConnectionManager.py
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./dagsterbosch:/opt/dagster/app
+      - ./data/logs/dagster:/opt/dagster/logs
+    command: ["poetry", "run", "dagster-daemon", "run"] 
+    restart: always
+    depends_on:
+      - dagster-webserver
+    networks:
+      - dockernet
+
+  etl-extract:  
+    build: ./extractbosch
+    container_name: etl-extract
+    volumes:
+      - ./config.yaml:/app/config.yaml
+      - ./utils.py:/app/utils.py
+      - ./ConnectionManager.py:/app/ConnectionManager.py
+      - ./data/input/extract:/app/input
+      - ./data/logs/extract:/app/logs
+    environment:
+      - IPV6_ADDR=fe80::260:34ff:fe56:c0e3 
+    restart: always
+    command: ["poetry", "run", "python", "extract.py"]
+    depends_on:
+      ctrlx-nodes:                 # comment while using real CtrlX
+        condition: service_started # comment while Using real CtrlX
+      solace-broker:
+        condition: service_started
+    networks:
+      dockernet:
+        link_local_ips:
+          - "fe80::1234"
+    extra_hosts:
+      - "ctrlx:192.168.1.1" 
+  etl-transform:
+    build: ./transformbosch
+    container_name: etl-transform
+    volumes:
+      - ./config.yaml:/app/config.yaml
+      - ./utils.py:/app/utils.py
+      - ./ConnectionManager.py:/app/ConnectionManager.py
+      - ./data/processed:/app/processed
+      - ./data/logs/transform:/app/logs
+    restart: always
+    command: ["poetry", "run", "python", "transform.py"]
+    depends_on:
+      etl-extract:
+        condition: service_started
+      solace-broker:
+        condition: service_started
+    networks:
+      - dockernet
+
+  etl-load:
+    build: ./loadbosch
+    container_name: etl-load
+    environment:
+      - POSTGRES_USER=boschrexroth
+      - POSTGRES_PASSWORD=boschrexroth
+      - POSTGRES_DB=automax
+      - POSTGRES_HOST=postgres-db
+      - POSTGRES_PORT=5432
+    volumes:
+      - ./config.yaml:/app/config.yaml
+      - ./utils.py:/app/utils.py
+      - ./ConnectionManager.py:/app/ConnectionManager.py
+      - ./data/processed:/app/processed
+      - ./data/logs/load:/app/logs
+    restart: always
+    command: ["poetry", "run", "python", "load.py"]
+    depends_on:
+      solace-broker:
+        condition: service_started
+      etl-transform:
+        condition: service_started
+      postgres-db:
+        condition: service_healthy
+    networks:
+      - dockernet
+
+volumes:
+  postgres_data: 
+    driver: local
+  grafana_data:   
+    driver: local
+  influxdb_data:
+    driver: local 
+
+networks:
+  dockernet:
+    driver: bridge
+    enable_ipv6: true
+    ipam:
+      config:
+        - subnet: 172.19.0.0/16  
+        - subnet: fd00::/64  
+    driver_opts:
+      com.docker.network.bridge.enable_ip_masquerade: "true"

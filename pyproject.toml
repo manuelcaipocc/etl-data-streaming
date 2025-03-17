@@ -1,0 +1,72 @@
+[tool.black]
+skip-string-normalization = true
+
+[tool.isort]
+profile = "black"
+extend_skip = [".md", ".json"]
+skip_gitignore = true
+
+[tool.poetry]
+name = "devbosch"
+version = "0.0.1"
+description = "Training data science"
+authors = ["Manuel Caipo <manuel.caipo@boschrexroth.de>"]
+
+[tool.poetry.dependencies]
+python = "3.10.11"
+
+# Prioridad: Compatibilidad de extensiones de tipado
+typing-extensions = "^4.12.2"  # Compatible con TensorFlow 2.13.0
+
+# Dependencias principales
+numpy = ">=1.26.0,<2.1.0"
+pandas = ">=1.5.0,<2.1.0"
+scikit-learn = ">=1.3.0,<1.4.0"
+xgboost = ">=1.7.0,<1.8.0"
+treeinterpreter = ">=0.2.3,<0.3.0"
+loguru = ">=0.7.0,<0.8.0"
+scipy = ">=1.11.0,<1.12.0"
+
+# AzureML y extensiones relacionadas
+azureml-core = ">=1.52.0,<1.53.0"
+azureml-mlflow = ">=1.52.0,<1.53.0"
+azure-identity = ">=1.14.0,<2.0.0"
+
+# Manejo de archivos
+openpyxl = ">=3.1.2,<3.2.0"
+
+# Análisis adicional
+scikit-fuzzy = ">=0.5.0,<0.6.0"
+
+# Interactividad y entornos interactivos
+ipython = "8.15.0"
+ipykernel = "6.25.2"
+
+# TensorFlow y extensiones
+tensorflow-io-gcs-filesystem = ">=0.31.0,<0.32.0"
+matplotlib = "^3.9.2"
+seaborn = "^0.13.2"
+tensorflow-intel = "^2.18.0"
+scikeras = "0.12.0"
+shap = "^0.46.0"
+keyboard = "^0.13.5"
+pyautogui = "^0.9.54"
+opcua = "^0.98.13"
+cx-oracle = "^8.3.0"
+requests = "^2.32.3"
+comtypes = "^1.4.8"
+pycaw = "^20240210"
+dagster = "^1.9.10"
+dagster-webserver = "^1.9.10"
+dagster-postgres = "^0.25.10"
+dagster-docker = "^0.25.10"
+paho-mqtt = "^2.1.0"
+solace-pubsubplus = "1.8.0"
+
+
+
+[tool.poetry.scripts]
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"

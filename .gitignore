@@ -1,0 +1,55 @@
+# Ignorar cualquier carpeta llamada logs, en cualquier ubicación
+**/logs/
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Distribution / packaging
+.Python
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# pyenv
+.python-version
+
+# dotenv
+.env
+
+# virtualenv
+.venv
+venv/
+ENV/
+
+# Exclude IDE settings
+.vscode/
+
+# Exclude CSV files
+*.csv
+
+# Exclude Python cache directories
+__pycache__/
+
+# Exclude Python SDC data directory
+python SDC/
+
+# Exclude Efficiency_pumps directory
+Efficiency_pumps/
+
+# Exclude specific Python script
+keyboardtest.py
+
+statistical_sample/
+etl/data/logs/solace/ad.debug.adHistogram_FGComputeLatency.356,12,2025-03-10,09.39.48
+etl/data/logs/solace/ad.debug.adHistogram_FGComputeLatency.356,12,2025-03-10,09.39.48
+etl/data/logs/solace/ad.debug.adHistogram_FGComputeLatency.382,12,2025-03-17,11.57.14
+etl/data/logs/solace/ad.debug.adHistogram_FGCpuUtilization.356,13,2025-03-10,09.39.48
+etl/data/logs/solace/ad.debug.adHistogram_FGCpuUtilization.382,13,2025-03-17,11.57.14
+etl/data/logs/solace/ad.debug.adHistogram_SAJournalDiskLatency.356,6,2025-03-10,09.39.47
+etl/data/logs/solace/ad.debug.adHistogram_SAJournalDiskLatency.382,6,2025-03-17,11.57.14
+etl/data/logs/solace/ad.debug.adHistogram_SAJournalDiskThroughput.356,5,2025-03-10,09.39.47
+etl/data/logs/solace/ad.debug.adHistogram_SAJournalDiskThroughput.382,5,2025-03-17,11.57.14
+etl/data/logs/solace/rsyslogd.log
+etl/data/logs/solace/sshd.log
+etl/data/logs/solace/ad.debug.adHistogram_FGComputeLatency.356,12,2025-03-10,09.39.48
