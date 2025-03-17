@@ -1,5 +1,7 @@
 # Ignorar cualquier carpeta llamada logs, en cualquier ubicación
 **/logs/
+**/history/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

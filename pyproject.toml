@@ -7,10 +7,11 @@ extend_skip = [".md", ".json"]
 skip_gitignore = true
 
 [tool.poetry]
-name = "devbosch"
+name = "etl-ctrlx"
 version = "0.0.1"
 description = "Training data science"
 authors = ["Manuel Caipo <manuel.caipo@boschrexroth.de>"]
+packages = [{ include = "etl-ctrlx" }]
 
 [tool.poetry.dependencies]
 python = "3.10.11"

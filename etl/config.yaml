@@ -1,9 +1,10 @@
 opcua:
   controllers:
     - name: "CtrlX_1"
-      server_url_client: "opc.tcp://192.168.1.10:4840"  #Use with real CtrlX
-      # server_url_server: "opc.tcp://0.0.0.0:4840"         #Use with simulated CtrlX
-      # server_url_client: "opc.tcp://ctrlx-nodes:4840"     #Use with simulated CtrlX
+      site: Cube-Ulm
+      # server_url_client: "opc.tcp://192.168.1.10:4840"  #Use with real CtrlX
+      server_url_server: "opc.tcp://0.0.0.0:4840"         #Use with simulated CtrlX
+      server_url_client: "opc.tcp://ctrlx-nodes:4840"     #Use with simulated CtrlX
       namespace: 192.168.1.1
       username: "boschrexroth"
       password: "boschrexroth"
@@ -15,10 +16,10 @@ opcua:
           BrowseName: "rEnergyConsumption"
           level: 8
           update_interval: 1000
-          variation_threshold: 0.05   # 5% of variation
-          run_status: False
-          simulation_value: 50              # use with simulated 
-          variation_simulation: 0.06  # 6 % of variation with simulated ctrlX
+          variation_threshold: 0.05            # 5% of variation
+          is_run_status: False
+          simulation_value: 100                 # use with simulated 
+          variation_simulation: 0.06           # 6 % of variation with simulated ctrlX
 
         - NodeId: "ns=2;s=framework/bundles/com_boschrexroth_plc_system/active"
           NamespaceIndex: 2
@@ -26,17 +27,18 @@ opcua:
           BrowseName: "active"
           Level: 10
           update_interval: 1000
-          run_status: True
+          is_run_status: True
           simulation_value: True
           variation_simulation: 5    #after 2 seconds it changes to the invert boolean value
 
     - name: "CtrlX_2"
-      server_url_client: "opc.tcp://192.168.1.20:4840"  #Use with real CtrlX
-      # server_url_server: "opc.tcp://0.0.0.0:4840"          #Use with simulated CtrlX
-      # server_url_client: "opc.tcp://ctrlx-nodes:4840"    #Use with simulated CtrlX
+      site: Cube-Ulm
+      # server_url_client: "opc.tcp://192.168.1.20:4840"      #Use with real CtrlX
+      server_url_server: "opc.tcp://0.0.0.0:4841"             #Use with simulated CtrlX
+      server_url_client: "opc.tcp://ctrlx-nodes:4841"         #Use with simulated CtrlX
       namespace: 192.168.1.1
-      username: "boschrexroth"   #Fill with real Ctrlx
-      password: "boschrexroth"  #Fill with real Ctrlx
+      username: "boschrexroth"                        # Fill with real Ctrlx
+      password: "boschrexroth"                        # Fill with real Ctrlx
 
       #Fill with CtrlX with security
       interface: 15
@@ -57,7 +59,7 @@ opcua:
         #   BrowseName: "bBlink"
         #   Level: 8
         #   update_interval: 100
-        #   run_status: True
+        #   is_run_status: True
 
         # - NodeId: "ns=2;s=plc/app/Application/sym/PLC_PRG/bBlinkOld"  
         #   NamespaceIndex: 2
@@ -65,7 +67,7 @@ opcua:
         #   BrowseName: "bBlinkOld"
         #   Level: 8
         #   update_interval: 100
-        #   run_status: True
+        #   is_run_status: True
 
         # - NodeId: "ns=2;s=plc/app/Application/sym/PLC_PRG/bStartOpModeChange" 
         #   NamespaceIndex: 2
@@ -73,7 +75,7 @@ opcua:
         #   BrowseName: "bStartOpModeChange"
         #   Level: 8
         #   update_interval: 100
-        #   run_status: True
+        #   is_run_status: True
 
         # - NodeId: "ns=2;s=plc/app/Application/sym/PLC_PRG/rDistancePercent" 
         #   NamespaceIndex: 2
@@ -82,7 +84,7 @@ opcua:
         #   Level: 8
         #   update_interval: 100
         #   variation_threshold: 0.05  # 5% of variation
-        #   run_status: False
+        #   is_run_status: False
 
         # - NodeId: "ns=2;s=plc/app/Application/sym/GVL_HMI/P_s"
         #   NamespaceIndex: 2
@@ -91,7 +93,7 @@ opcua:
         #   Level: 8
         #   update_interval: 100
         #   variation_threshold: 0.05  # 5% of variation
-        #   run_status: False
+        #   is_run_status: False
 
         # - NodeId: "ns=2;s=plc/app/Application/sym/GVL_HMI/P_a"
         #   NamespaceIndex: 2
@@ -100,7 +102,7 @@ opcua:
         #   Level: 8
         #   update_interval: 100
         #   variation_threshold: 0.05  # 5% of variation
-        #   run_status: False
+        #   is_run_status: False
 
         # - NodeId: "ns=2;s=plc/app/Application/sym/GVL_HMI/P_b"
         #   NamespaceIndex: 2
@@ -109,7 +111,7 @@ opcua:
         #   Level: 8
         #   update_interval: 1
         #   variation_threshold: 0.05  # 5% of variation
-        #   run_status: False
+        #   is_run_status: False
 
         # - NodeId: "ns=2;s=plc/app/Application/sym/GVL_HMI/V"
         #   NamespaceIndex: 2
@@ -117,7 +119,7 @@ opcua:
         #   BrowseName: "V"
         #   Level: 8
         #   variation_threshold: 0.05  # 5% of variation
-        #   run_status: False
+        #   is_run_status: False
 
         - NodeId: "ns=2;s=plc/app/Station2/sym/Monitoring/rEnergyConsumption"
           NamespaceIndex: 2
@@ -126,8 +128,9 @@ opcua:
           Level: 8
           update_interval: 1000      # miliseconds 
           variation_threshold: 0.05  # 5% of variation
-          run_status: False
-
+          is_run_status: False
+          simulation_value: 100              # use with simulated 
+          variation_simulation: 0.06  # 6 % of variation with simulated ctrlX
 
         - NodeId: "ns=2;s=system/apps/installed/snap_snapd/enabled"  
           NamespaceIndex: 2
@@ -135,8 +138,9 @@ opcua:
           BrowseName: "enabled"
           Level: 7
           update_interval: 1000
-          run_status: True
-
+          is_run_status: True
+          simulation_value: True            # use with simulated 
+          variation_simulation: 4  # 6 % of variation with simulated ctrlX
 
 solace:
   host: solace-broker
@@ -156,5 +160,5 @@ postgres:
   db: automax
   schema: sandbox
   table: ctrlx_data
-  write_interval: 600
-  batch_size: 10000
+  write_interval: 60
+  batch_size: 100

@@ -14,53 +14,60 @@ from ConnectionManager import ConnectionManager
 from concurrent.futures import ThreadPoolExecutor
 import threading
 
-# Logging configuration
+
+# Configuración de logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-config = utils.load_config()
+# Carga de configuración
+global_config = utils.load_config()
 last_values = {}
+initial_publishes = {}
+
 
 def create_publisher(service):
-    """Creates a direct publisher for Solace"""
+    """Crea un publicador de mensajes para Solace"""
     if service is None or not service.is_connected:
-        logger.error("No active connection with Solace. Cannot create publisher.")
+        logger.error("No hay conexión activa con Solace. No se puede crear el publicador.")
         return None
-
     try:
         publisher = service.create_direct_message_publisher_builder().build()
         publisher.start()
-        logger.info("Solace publisher initialized successfully.")
+        logger.info("Publicador de Solace inicializado correctamente.")
         return publisher
     except Exception as e:
-        logger.error(f"Error creating Solace publisher: {e}")
+        logger.error(f"Error creando publicador de Solace: {e}")
         return None
 
-# Publish data to Solace efficiently
-def publish_to_solace(publisher, topic_name, payload):
-    """Publishes a message to Solace on the specified topic"""
-    if publisher is None or not publisher.is_ready():
-        logger.error("No active connection with the Solace publisher. Cannot publish.")
-        return
 
+def publish_to_solace(publisher, topic_name, payload):
+    """Publica un mensaje en Solace"""
+    if publisher is None or not publisher.is_ready():
+        logger.error("No hay conexión activa con el publicador de Solace. No se puede publicar.")
+        return
     try:
         topic = Topic.of(topic_name)
         message = json.dumps(payload)
         publisher.publish(message, topic)
-        logger.info(f"Published to Solace ({topic_name}): {payload}")
+        logger.info(f"Publicado en Solace ({topic_name}): {payload}")
     except Exception as e:
-        logger.error(f"Error sending message to Solace: {e}")
+        logger.error(f"Error enviando mensaje a Solace: {e}")
 
-def extract_sensor_data(opcua_client, solace_publisher, node):
-    """Extrae datos de un sensor y los envía a Solace solo si hay una variación significativa"""
+
+def extract_sensor_data(opcua_client, solace_publisher, node, ctrlx_name, site):
+    """Extrae datos de sensores OPC UA y publica en Solace según las reglas definidas."""
     browse_name = node["BrowseName"]
     namespace_index = node.get("NamespaceIndex", 2)
     route_name = node["RouteName"]
-    update_interval = node.get("update_interval", 100) / 1000  # Convertir a segundos
-    variation_threshold = node.get("variation_threshold", 0.01)  # Default: 1% de variación mínima
+    update_interval = node.get("update_interval", 1000) / 1000  # Conversión de ms a s
+    variation_threshold = node.get("variation_threshold", 0.05)
+    is_run_status = node.get("is_run_status", False)
 
     node_id = f"ns={namespace_index};s={route_name}"
-    last_value = last_values.get(node_id, None)
+    last_values[node_id] = None
+    initial_publishes[node_id] = 0  # Contador de publicaciones iniciales obligatorias
+
+    time.sleep(5)  # Esperar 5 segundos antes de comenzar la extracción de datos
 
     while True:
         try:
@@ -68,63 +75,78 @@ def extract_sensor_data(opcua_client, solace_publisher, node):
             value = opcua_node.get_value()
             timestamp = datetime.utcnow().isoformat() + "Z"
 
-            if last_value is not None:
-                delta = abs(value - last_value) / (abs(last_value) + 1e-9)  # Evita divisiones por cero
-                if delta < variation_threshold:
-                    time.sleep(update_interval)
-                    continue  # No publica si la variación es menor al umbral
+            should_publish = False
+            
+            if initial_publishes[node_id] < 10:
+                should_publish = True
+                initial_publishes[node_id] += 1
+            else:
+                last_value = last_values[node_id]
+                if is_run_status:  # Booleano: Publicar solo si hay un cambio
+                    if last_value is None or value != last_value:
+                        should_publish = True
+                else:  # Numérico: Publicar si el cambio es mayor al umbral
+                    if last_value is not None:
+                        delta = abs(value - last_value) / (abs(last_value) + 1e-9)
+                        if delta >= variation_threshold:
+                            should_publish = True
 
-            last_values[node_id] = value
-
-            variable_data = {
-                "NamespaceIndex": namespace_index,
-                "RouteName": route_name,
-                "BrowseName": browse_name,
-                "Value": value,
-                "DataType": node.get("type", "Unknown"),
-                "processed": False,
-                "Timestamp": timestamp
-            }
-
-            publish_to_solace(solace_publisher, config["solace"]["topics"]["raw_data"][0], variable_data)
+            if should_publish:
+                last_values[node_id] = value
+                variable_data = {
+                    "CtrlX_Name": ctrlx_name,
+                    "Site": site,
+                    "NamespaceIndex": namespace_index,
+                    "RouteName": route_name,
+                    "BrowseName": browse_name,
+                    "Value": value,
+                    "DataType": "Boolean" if is_run_status else "Float",
+                    "processed": False,
+                    "Timestamp": timestamp,
+                    "is_run_status": is_run_status
+                }
+                publish_to_solace(solace_publisher, global_config["solace"]["topics"]["raw_data"][0], variable_data)
 
         except Exception as e:
             logger.error(f"Error extrayendo {browse_name} ({route_name}): {e}")
 
         time.sleep(update_interval)
 
-def extract_data():
-    """Inicializa las conexiones OPC UA y Solace y lanza hilos para extraer datos de cada sensor"""
-    connection_manager = ConnectionManager()  # Se crea la única instancia del singleton
-    connection_manager.connect_opcua()  # Inicia todas las conexiones OPC UA
 
-    logger.info("Esperando 10 segundos antes de conectar con Solace...")
-    time.sleep(10)  # Tiempo para estabilizar la conexión OPC UA
+def extract_data():
+    """Inicializa conexiones y lanza hilos para la extracción de datos."""
+    connection_manager = ConnectionManager()
+    connection_manager.connect_opcua()
+
+    logger.info("Esperando 10 segundos antes de conectar a Solace...")
+    time.sleep(10)
 
     solace_service = connection_manager.connect_solace()
-    if solace_service is None:
-        logger.error("Error al conectar con Solace. Terminando ejecución.")
+    if not solace_service:
+        logger.error("Error conectando a Solace. Terminando ejecución.")
         return
 
     solace_publisher = create_publisher(solace_service)
-    if solace_publisher is None:
-        logger.error("Error al inicializar publicador de Solace. Terminando ejecución.")
+    if not solace_publisher:
+        logger.error("Error inicializando publicador de Solace. Terminando ejecución.")
         return
 
     with ThreadPoolExecutor(max_workers=10) as executor:
-        for ctrlx in config["opcua"]["controllers"]:
+        for ctrlx in global_config["opcua"]["controllers"]:
             ctrlx_name = ctrlx["name"]
+            site = ctrlx.get("site", "Unknown")
             opcua_client = connection_manager.get_opcua_client(ctrlx_name)
             if not opcua_client:
-                logger.error(f"No se pudo obtener cliente OPC UA para {ctrlx_name}. Omitiendo...")
+                logger.error(f"No se pudo obtener el cliente OPC UA para {ctrlx_name}. Omitiendo...")
                 continue
 
             nodes = ctrlx["nodes"]
             for node in nodes:
-                executor.submit(extract_sensor_data, opcua_client, solace_publisher, node)
+                executor.submit(extract_sensor_data, opcua_client, solace_publisher, node, ctrlx_name, site)
 
     while True:
-        time.sleep(1)  # Mantiene vivo el hilo principal
+        time.sleep(1)  # Mantiene el hilo principal activo
+
 
 if __name__ == "__main__":
     extract_data()

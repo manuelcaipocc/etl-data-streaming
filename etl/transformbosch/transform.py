@@ -103,13 +103,16 @@ class SolaceMessageHandler(MessageHandler):
                 transformed_value = raw_data["Value"]
             
             transformed_data = {
+                "CtrlX_Name": raw_data["CtrlX_Name"],
+                "Site": raw_data["Site"],
                 "NamespaceIndex": raw_data["NamespaceIndex"],
                 "RouteName": raw_data["RouteName"],
                 "BrowseName": browse_name,
                 "Value": transformed_value,
                 "DataType": raw_data["DataType"],
                 "processed": True,
-                "Timestamp": raw_data["Timestamp"]
+                "Timestamp": raw_data["Timestamp"],
+                "is_run_status": raw_data["is_run_status"]
             }
 
             publish_to_solace(self.solace_publisher, config["solace"]["topics"]["transformed_data"][0], transformed_data)

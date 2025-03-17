@@ -51,7 +51,7 @@ def generate_code(browse_name):
     return extract_code_prefix(browse_name)
 
 def validate_record(record):
-    required_keys = {"NamespaceIndex", "RouteName", "BrowseName", "Value", "DataType", "Timestamp"}
+    required_keys = {"NamespaceIndex", "RouteName", "BrowseName", "Value", "DataType", "Timestamp", "CtrlX_Name", "Site", "is_run_status"}
     return all(key in record for key in required_keys)
 
 def save_to_backup(data_batch):
@@ -84,8 +84,8 @@ def insert_data(conn, batch_data):
         logger.error("Skipping insertion due to invalid data format.")
         return False
     query = """
-    INSERT INTO sandbox.ctrlx_data (NamespaceIndex, RouteName, BrowseName, Value, DataType, Timestamp, Code)
-    VALUES (%s, %s, %s, %s, %s, %s, %s)
+    INSERT INTO sandbox.ctrlx_data (NamespaceIndex, RouteName, BrowseName, Value, DataType, Timestamp, Code, CtrlX_Name, Site, is_run_status)
+    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
     """
     try:
         with conn.cursor() as cursor:
@@ -95,7 +95,11 @@ def insert_data(conn, batch_data):
                         float(d["Value"]) if isinstance(d["Value"], (bool, int)) else d["Value"],
                         d["DataType"],
                         d["Timestamp"],
-                        generate_code(d["BrowseName"])) for d in batch_data]
+                        generate_code(d["BrowseName"]),
+                        d["CtrlX_Name"],
+                        d["Site"],
+                        d["is_run_status"]
+                        ) for d in batch_data]
             cursor.executemany(query, records)
             conn.commit()
             logger.info(f"Inserted {len(records)} records into PostgreSQL.")
