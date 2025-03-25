@@ -1,0 +1,8 @@
+2025-03-25 11:45:11 +0000 - dagster - DEBUG - test_all_connections - f8284a25-8f9e-4474-b41a-1b55105f7f53 - 1965 - LOGS_CAPTURED - Started capturing logs in process (pid: 1965).
+2025-03-25 11:45:11 +0000 - dagster - DEBUG - test_all_connections - f8284a25-8f9e-4474-b41a-1b55105f7f53 - 1965 - test_postgres_op - STEP_START - Started execution of step "test_postgres_op".
+2025-03-25 11:45:11 +0000 - dagster - INFO - test_all_connections - f8284a25-8f9e-4474-b41a-1b55105f7f53 - test_postgres_op - PostgreSQL respondió: (1,)
+2025-03-25 11:45:11 +0000 - dagster - INFO - test_all_connections - f8284a25-8f9e-4474-b41a-1b55105f7f53 - test_postgres_op - Conexión a PostgreSQL cerrada.
+2025-03-25 11:45:11 +0000 - dagster - DEBUG - test_all_connections - f8284a25-8f9e-4474-b41a-1b55105f7f53 - 1965 - test_postgres_op - STEP_OUTPUT - Yielded output "result" of type "Any". (Type check passed).
+2025-03-25 11:45:11 +0000 - dagster - DEBUG - test_all_connections - f8284a25-8f9e-4474-b41a-1b55105f7f53 - test_postgres_op - Writing file at: /opt/dagster/app/storage/f8284a25-8f9e-4474-b41a-1b55105f7f53/test_postgres_op/result using PickledObjectFilesystemIOManager...
+2025-03-25 11:45:11 +0000 - dagster - DEBUG - test_all_connections - f8284a25-8f9e-4474-b41a-1b55105f7f53 - 1965 - test_postgres_op - HANDLED_OUTPUT - Handled output "result" using IO manager "io_manager"
+2025-03-25 11:45:11 +0000 - dagster - DEBUG - test_all_connections - f8284a25-8f9e-4474-b41a-1b55105f7f53 - 1965 - test_postgres_op - STEP_SUCCESS - Finished execution of step "test_postgres_op" in 165ms.

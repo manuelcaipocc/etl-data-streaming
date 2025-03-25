@@ -1,0 +1,58 @@
+2025-03-25 11:45:11 +0000 - dagster - DEBUG - test_all_connections - f8284a25-8f9e-4474-b41a-1b55105f7f53 - 1964 - LOGS_CAPTURED - Started capturing logs in process (pid: 1964).
+2025-03-25 11:45:11 +0000 - dagster - DEBUG - test_all_connections - f8284a25-8f9e-4474-b41a-1b55105f7f53 - 1964 - test_opcua_op - STEP_START - Started execution of step "test_opcua_op".
+INFO:utils:Loading configuration from /app/config.yaml
+INFO:utils:Config loaded successfully.
+INFO:opcua.client.ua_client:read
+INFO:opcua.uaprotocol:received header: Header(type:b'MSG', chunk_type:b'F', body_size:54, channel:7)
+WARNING:ConnectionManager:La conexión OPC UA para CtrlX_1 se ha perdido. Intentando reconectar...
+INFO:utils:Loading configuration from /app/config.yaml
+INFO:utils:Config loaded successfully.
+INFO:ConnectionManager:Ya existe una conexión activa para CtrlX_1, omitiendo conexión.
+INFO:ConnectionManager:Ya existe una conexión activa para CtrlX_2, omitiendo conexión.
+2025-03-25 11:45:11 +0000 - dagster - INFO - test_all_connections - f8284a25-8f9e-4474-b41a-1b55105f7f53 - test_opcua_op - Conexión a OPC UA (CtrlX_1) verificada correctamente.
+INFO:opcua.client.ua_client:close_session
+INFO:opcua.uaprotocol:received header: Header(type:b'MSG', chunk_type:b'F', body_size:40, channel:7)
+INFO:opcua.client.ua_client.Socket:close_secure_channel
+INFO:opcua.client.ua_client.Socket:Request to close socket received
+INFO:opcua.client.ua_client.Socket:Socket closed, waiting for receiver thread to terminate...
+INFO:opcua.client.ua_client.Socket:Socket has closed connection
+INFO:opcua.client.ua_client.Socket:Cancelling request 6
+INFO:opcua.client.ua_client.Socket:Thread ended
+INFO:opcua.client.ua_client.Socket:Done closing socket: Receiving thread terminated, socket disconnected
+INFO:ConnectionManager:Desconectado OPC UA: CtrlX_1
+2025-03-25 11:45:11 +0000 - dagster - INFO - test_all_connections - f8284a25-8f9e-4474-b41a-1b55105f7f53 - test_opcua_op - Conexión a OPC UA (CtrlX_1) cerrada.
+INFO:opcua.client.ua_client:read
+INFO:opcua.uaprotocol:received header: Header(type:b'MSG', chunk_type:b'F', body_size:54, channel:7)
+WARNING:ConnectionManager:La conexión OPC UA para CtrlX_2 se ha perdido. Intentando reconectar...
+INFO:utils:Loading configuration from /app/config.yaml
+INFO:utils:Config loaded successfully.
+INFO:ConnectionManager:Intentando conectar a OPC UA (CtrlX_1) en opc.tcp://ctrlx-nodes:4840
+INFO:ConnectionManager:Conectando a OPC UA (CtrlX_1) - Intento 1/5
+INFO:opcua.client.ua_client.Socket:opening connection
+INFO:opcua.client.ua_client.Socket:Thread started
+INFO:opcua.uaprotocol:received header: Header(type:b'ACK', chunk_type:b'F', body_size:20, channel:0)
+INFO:opcua.client.ua_client.Socket:open_secure_channel
+INFO:opcua.uaprotocol:received header: Header(type:b'OPN', chunk_type:b'F', body_size:123, channel:8)
+INFO:opcua.client.ua_client:create_session
+INFO:opcua.uaprotocol:received header: Header(type:b'MSG', chunk_type:b'F', body_size:545, channel:8)
+WARNING:opcua.client.client:Sending plain-text password
+INFO:opcua.client.ua_client:activate_session
+INFO:opcua.uaprotocol:received header: Header(type:b'MSG', chunk_type:b'F', body_size:84, channel:8)
+INFO:ConnectionManager:Conexión exitosa a OPC UA (CtrlX_1)
+INFO:ConnectionManager:Ya existe una conexión activa para CtrlX_2, omitiendo conexión.
+2025-03-25 11:45:11 +0000 - dagster - INFO - test_all_connections - f8284a25-8f9e-4474-b41a-1b55105f7f53 - test_opcua_op - Conexión a OPC UA (CtrlX_2) verificada correctamente.
+INFO:opcua.client.ua_client:close_session
+INFO:opcua.uaprotocol:received header: Header(type:b'MSG', chunk_type:b'F', body_size:40, channel:7)
+INFO:opcua.client.ua_client.Socket:close_secure_channel
+INFO:opcua.client.ua_client.Socket:Request to close socket received
+INFO:opcua.client.ua_client.Socket:Socket closed, waiting for receiver thread to terminate...
+INFO:opcua.client.ua_client.Socket:Socket has closed connection
+INFO:opcua.client.ua_client.Socket:Cancelling request 6
+INFO:opcua.client.ua_client.Socket:Thread ended
+INFO:opcua.client.ua_client.Socket:Done closing socket: Receiving thread terminated, socket disconnected
+INFO:ConnectionManager:Desconectado OPC UA: CtrlX_2
+2025-03-25 11:45:11 +0000 - dagster - INFO - test_all_connections - f8284a25-8f9e-4474-b41a-1b55105f7f53 - test_opcua_op - Conexión a OPC UA (CtrlX_2) cerrada.
+2025-03-25 11:45:11 +0000 - dagster - DEBUG - test_all_connections - f8284a25-8f9e-4474-b41a-1b55105f7f53 - 1964 - test_opcua_op - STEP_OUTPUT - Yielded output "result" of type "Any". (Type check passed).
+2025-03-25 11:45:11 +0000 - dagster - DEBUG - test_all_connections - f8284a25-8f9e-4474-b41a-1b55105f7f53 - test_opcua_op - Writing file at: /opt/dagster/app/storage/f8284a25-8f9e-4474-b41a-1b55105f7f53/test_opcua_op/result using PickledObjectFilesystemIOManager...
+2025-03-25 11:45:11 +0000 - dagster - DEBUG - test_all_connections - f8284a25-8f9e-4474-b41a-1b55105f7f53 - 1964 - test_opcua_op - HANDLED_OUTPUT - Handled output "result" using IO manager "io_manager"
+2025-03-25 11:45:11 +0000 - dagster - DEBUG - test_all_connections - f8284a25-8f9e-4474-b41a-1b55105f7f53 - 1964 - test_opcua_op - STEP_SUCCESS - Finished execution of step "test_opcua_op" in 355ms.

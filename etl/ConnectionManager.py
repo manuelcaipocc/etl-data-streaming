@@ -87,11 +87,24 @@ class ConnectionManager:
         
         logger.error(f"No hay conexión OPC UA disponible para {ctrlx_name}.")
         return None
+    def disconnect_opcua(self, ctrlx_name):
+        client = self.opcua_clients.get(ctrlx_name)
+        if client:
+            try:
+                client.disconnect()
+                self.opcua_clients.pop(ctrlx_name, None)
+                logger.info(f"Desconectado OPC UA: {ctrlx_name}")
+            except Exception as e:
+                logger.warning(f"Error al desconectar OPC UA ({ctrlx_name}): {e}")
 
 
     @staticmethod
     def connect_solace():
         """Establishes connection with Solace PubSub+ and handles retries with a delay"""
+        
+        if hasattr(self, "solace_service"):
+            return self.solace_service  
+        
         config=utils.load_config()
         solace_config = config["solace"]
         broker_props = {
@@ -126,9 +139,6 @@ class ConnectionManager:
         logger.error("Failed to connect to Solace after multiple attempts.")
         return None
     
-    
-
-
     @staticmethod
     def connect_postgres(retries=5, delay=5):
         """Establishes a connection to PostgreSQL using the configured schema and table."""

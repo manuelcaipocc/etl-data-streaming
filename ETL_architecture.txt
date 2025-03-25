@@ -11,31 +11,29 @@ etl/
 │    └── pyproject.toml
 ├── dagsterbosch/
 │    ├── .nux/
-│    │    └── nux.yaml
 │    ├── .telemetry/
 │    │    └── id.yaml
 │    ├── Dockerfile
-│    ├── __init__.py
 │    ├── dagster.yaml
-│    ├── dagsterbosch/
-│    │    ├── __init__.py
-│    │    └── main.py
-│    ├── jobs/
-│    │    ├── __init__.py
-│    │    └── etl_jobs.py
 │    ├── logs/
 │    ├── poetry.lock
 │    ├── pyproject.toml
-│    ├── resources/
-│    │    ├── __init__.py
-│    │    ├── database_resources.py
-│    │    └── docker_resources.py
 │    ├── schedules/
 │    │    └── schedules.db
-│    ├── sensors/
-│    │    ├── __init__.py
-│    │    ├── solace_load_sensor.py
-│    │    └── solace_transform_sensor.py
+│    ├── src/
+│    │    └── dagsterbosch/
+│    │        ├── __init__.py
+│    │        ├── jobs/
+│    │        │    ├── __init__.py
+│    │        │    ├── dummy_job.py
+│    │        │    └── test_resources_job.py
+│    │        ├── main.py
+│    │        ├── resources/
+│    │        │    ├── __init__.py
+│    │        │    └── connection_resources.py
+│    │        └── sensors/
+│    │            ├── __init__.py
+│    │            └── extract_monitor_sensor.py
 │    └── workspace.yaml
 ├── data/
 │    ├── input/

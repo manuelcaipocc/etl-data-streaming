@@ -33,7 +33,7 @@ services:
       - solace_mqtt_ws_port=8000  
     ports:
       - "8080:8080"
-      - "55555:55555"
+      - "58000:55555"
       - "1883:1883"
       - "9000:9000"
       - "8008:8008"
@@ -86,8 +86,12 @@ services:
       - ./telegrafbosch/telegraf.conf:/etc/telegraf/telegraf.conf
       - ./telegrafbosch/transform_sensors.star:/etc/telegraf/transform_sensors.star
     depends_on:
-      - influxdb
-      - solace-broker
+      etl-extract:
+        condition: service_started
+      solace-broker:
+        condition: service_started
+      influxdb:
+        condition: service_started
     restart: always
     networks:
       - dockernet
@@ -103,7 +107,10 @@ services:
       - grafana_data:/var/lib/grafana
     restart: always
     depends_on:
-      - solace-broker
+      etl-extract:
+        condition: service_started
+      solace-broker:
+        condition: service_started
     networks:
       - dockernet
 
@@ -139,6 +146,7 @@ services:
       - POSTGRES_USER=boschrexroth
       - POSTGRES_PASSWORD=boschrexroth
       - POSTGRES_DB=automax
+      - PYTHONPATH=/app/src 
     ports:
       - "3000:3000"
     volumes:
@@ -170,6 +178,7 @@ services:
       - POSTGRES_USER=boschrexroth
       - POSTGRES_PASSWORD=boschrexroth
       - POSTGRES_DB=automax
+      - PYTHONPATH=/app/src 
     volumes:
       - ./config.yaml:/app/config.yaml
       - ./utils.py:/app/utils.py

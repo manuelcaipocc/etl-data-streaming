@@ -119,7 +119,7 @@ def extract_data():
     connection_manager.connect_opcua()
 
     logger.info("Esperando 10 segundos antes de conectar a Solace...")
-    time.sleep(10)
+    time.sleep(20)
 
     solace_service = connection_manager.connect_solace()
     if not solace_service:
