@@ -2,30 +2,23 @@ from dagster import job, op
 from dagster import job, op
 from utils import utils
 from dagsterbosch.resources.connection_resources import (
-    postgres_resource,
-    solace_resource,
-    opcua_resource
-)
+    connection_manager_resource)
 
 
-@op(required_resource_keys={"postgres"})
+@op(required_resource_keys={"cm"})
 def test_postgres_op(context):
-    conn = context.resources.postgres
-    try:
-        cursor = conn.cursor()
-        cursor.execute("SELECT 1;")
-        result = cursor.fetchone()
-        context.log.info(f"PostgreSQL respondió: {result}")
-    finally:
-        conn.close()
-        context.log.info("Conexión a PostgreSQL cerrada.")
+    conn = context.resources.cm.conn
+    cursor = conn.cursor()
+    cursor.execute("SELECT 1;")
+    result = cursor.fetchone()
+    context.log.info(f"PostgreSQL respondió: {result}")
+    context.resources.cm.disconnect_postgres()
 
-@op(required_resource_keys={"solace"})
+@op(required_resource_keys={"cm"})
 def test_solace_op(context):
-    solace_service = context.resources.solace
+    solace_service = context.resources.cm.messaging_service_instance
     try:
         publisher = solace_service.create_direct_message_publisher_builder().build()
-        publisher.start()
         context.log.info("Conexión a Solace verificada exitosamente al crear un publisher.")
     except Exception as e:
         context.log.error(f"No se pudo verificar la conexión a Solace: {e}")
@@ -36,30 +29,25 @@ def test_solace_op(context):
         except Exception as e:
             context.log.warning(f"No se pudo cerrar el publisher: {e}")
 
-
-@op(required_resource_keys={"opcua"})
+@op(required_resource_keys={"cm"})
 def test_opcua_op(context):
-    opcua = context.resources.opcua  # es tu ConnectionManager
+    cm = context.resources.cm # es tu ConnectionManager
     config = utils.load_config()
     controllers = config["opcua"]["controllers"]
 
     for ctrlx in controllers:
         name = ctrlx["name"]
-        client = opcua.get_opcua_client(name)
+        client = cm.get_opcua_client(name)
 
         if client:
             context.log.info(f"Conexión a OPC UA ({name}) verificada correctamente.")
-            opcua.disconnect_opcua(name)
+            cm.disconnect_opcua(name)
             context.log.info(f"Conexión a OPC UA ({name}) cerrada.")
         else:
             context.log.warning(f"No se pudo obtener cliente OPC UA para {name}.")
 
 
-@job(resource_defs={
-    "postgres": postgres_resource,
-    "solace": solace_resource,
-    "opcua": opcua_resource
-})
+@job(resource_defs={"cm": connection_manager_resource})
 def test_all_connections():
     test_postgres_op()
     test_solace_op()

@@ -1,7 +1,0 @@
-2025-03-25 11:21:10 +0000 - dagster - DEBUG - test_all_connections - 5fc6a03a-deee-4f5c-a4e2-c2b4508aa8fa - 9829 - LOGS_CAPTURED - Started capturing logs in process (pid: 9829).
-2025-03-25 11:21:10 +0000 - dagster - DEBUG - test_all_connections - 5fc6a03a-deee-4f5c-a4e2-c2b4508aa8fa - 9829 - test_solace_op - STEP_START - Started execution of step "test_solace_op".
-2025-03-25 11:21:10 +0000 - dagster - INFO - test_all_connections - 5fc6a03a-deee-4f5c-a4e2-c2b4508aa8fa - test_solace_op - Conexión a Solace verificada exitosamente al crear un publisher.
-2025-03-25 11:21:10 +0000 - dagster - DEBUG - test_all_connections - 5fc6a03a-deee-4f5c-a4e2-c2b4508aa8fa - 9829 - test_solace_op - STEP_OUTPUT - Yielded output "result" of type "Any". (Type check passed).
-2025-03-25 11:21:10 +0000 - dagster - DEBUG - test_all_connections - 5fc6a03a-deee-4f5c-a4e2-c2b4508aa8fa - test_solace_op - Writing file at: /opt/dagster/app/storage/5fc6a03a-deee-4f5c-a4e2-c2b4508aa8fa/test_solace_op/result using PickledObjectFilesystemIOManager...
-2025-03-25 11:21:10 +0000 - dagster - DEBUG - test_all_connections - 5fc6a03a-deee-4f5c-a4e2-c2b4508aa8fa - 9829 - test_solace_op - HANDLED_OUTPUT - Handled output "result" using IO manager "io_manager"
-2025-03-25 11:21:11 +0000 - dagster - DEBUG - test_all_connections - 5fc6a03a-deee-4f5c-a4e2-c2b4508aa8fa - 9829 - test_solace_op - STEP_SUCCESS - Finished execution of step "test_solace_op" in 149ms.

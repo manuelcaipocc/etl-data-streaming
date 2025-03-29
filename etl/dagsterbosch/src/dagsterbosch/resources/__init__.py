@@ -1,7 +1,5 @@
-from .connection_resources import postgres_resource, solace_resource, opcua_resource
+from .connection_resources import connection_manager_resource
 
 __all__ = [
-    "postgres_resource",
-    "solace_resource",
-    "opcua_resource"
+    "connection_manager_resource",
 ]

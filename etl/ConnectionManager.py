@@ -98,12 +98,11 @@ class ConnectionManager:
                 logger.warning(f"Error al desconectar OPC UA ({ctrlx_name}): {e}")
 
 
-    @staticmethod
-    def connect_solace():
+    def connect_solace(self):
         """Establishes connection with Solace PubSub+ and handles retries with a delay"""
         
         if hasattr(self, "solace_service"):
-            return self.solace_service  
+            return self.messaging_service_instance  
         
         config=utils.load_config()
         solace_config = config["solace"]
@@ -120,13 +119,13 @@ class ConnectionManager:
 
         while attempt < max_retries:
             try:
-                messaging_service_instance = messaging_service.MessagingService.builder() \
+                self.messaging_service_instance = messaging_service.MessagingService.builder() \
                     .from_properties(broker_props) \
                     .build()
 
-                messaging_service_instance.connect()
+                self.messaging_service_instance.connect()
                 logger.info("Successfully connected to Solace PubSub+")
-                return messaging_service_instance
+                return self.messaging_service_instance
 
             except Exception as e:
                 attempt += 1
@@ -139,8 +138,15 @@ class ConnectionManager:
         logger.error("Failed to connect to Solace after multiple attempts.")
         return None
     
-    @staticmethod
-    def connect_postgres(retries=5, delay=5):
+    def disconnect_solace(self):
+        if hasattr(self, "solace_service"):
+            try:
+                del self.messaging_service_instance
+                logger.info("Solace service eliminado del ConnectionManager.")
+            except Exception as e:
+                logger.warning(f"Error al intentar eliminar la conexión Solace: {e}")
+
+    def connect_postgres(self,retries=5, delay=5):
         """Establishes a connection to PostgreSQL using the configured schema and table."""
         
         config = utils.load_config()
@@ -157,7 +163,7 @@ class ConnectionManager:
         attempt = 0
         while attempt < retries:
             try:
-                conn = psycopg2.connect(
+                self.conn = psycopg2.connect(
                     host=POSTGRES_HOST,
                     user=POSTGRES_USER,
                     password=POSTGRES_PASSWORD,
@@ -166,11 +172,28 @@ class ConnectionManager:
                     options=f'-c search_path={POSTGRES_SCHEMA}'  # Asegura que el esquema sandbox sea usado
                 )
                 logger.info(f"Successful connection to PostgreSQL using schema {POSTGRES_SCHEMA}.")
-                return conn
+                return self.conn
             except psycopg2.DatabaseError as e:
                 logger.error(f"PostgreSQL connection failure (Attempt {attempt+1}/{retries}): {e}")
                 time.sleep(delay * (2 ** attempt))
                 attempt += 1
         logger.error("Failed to connect to PostgreSQL after multiple attempts.")
         return None
+    def disconnect_postgres(self):
+        if hasattr(self, "postgres_conn"):
+            try:
+                self.postgres_conn.close()
+                logger.info("Conexión PostgreSQL cerrada.")
+                del self.postgres_conn
+            except Exception as e:
+                logger.warning(f"Error cerrando conexión PostgreSQL: {e}") 
+    
+    def disconnect_opcua_all(self):
+        for ctrlx_name in list(self.opcua_clients.keys()):
+            self.disconnect_opcua(ctrlx_name)
+            
+    def disconnect_all(self):
+        self.disconnect_opcua_all()
+        self.disconnect_postgres()
+        self.disconnect_solace() 
     

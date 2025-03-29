@@ -120,7 +120,8 @@ class SolaceMessageHandler(MessageHandler):
             logger.error(f"Error processing Solace message: {e}")
                     
 if __name__ == "__main__":
-    solace_service = ConnectionManager.connect_solace()
+    manager = ConnectionManager() 
+    solace_service = manager.connect_solace()
 
     if solace_service is None:
         logger.error("Failed to connect to Solace. Exiting program.")

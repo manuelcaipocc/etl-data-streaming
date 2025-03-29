@@ -33,7 +33,8 @@ os.makedirs(BACKUP_DIR, exist_ok=True)
 def get_postgres_connection():
     while True:
         try:
-            conn = ConnectionManager.connect_postgres()
+            manager = ConnectionManager()
+            conn = manager.connect_postgres()
             if conn:
                 logger.info("Connected to PostgreSQL successfully.")
                 return conn
@@ -149,7 +150,8 @@ def database_writer():
                         logger.error(f"Unexpected error in database_writer: {e}")
 
 if __name__ == "__main__":
-    solace_service = ConnectionManager.connect_solace()
+    manager = ConnectionManager() 
+    solace_service = manager.connect_solace()
     if solace_service is None:
         logger.error("Failed to connect to Solace. Exiting program.")
         exit(1)

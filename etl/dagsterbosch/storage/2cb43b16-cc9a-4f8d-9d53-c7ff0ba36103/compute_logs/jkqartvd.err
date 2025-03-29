@@ -1,8 +1,0 @@
-2025-03-25 10:49:41 +0000 - dagster - DEBUG - test_all_connections - 2cb43b16-cc9a-4f8d-9d53-c7ff0ba36103 - 4480 - LOGS_CAPTURED - Started capturing logs in process (pid: 4480).
-2025-03-25 10:49:41 +0000 - dagster - DEBUG - test_all_connections - 2cb43b16-cc9a-4f8d-9d53-c7ff0ba36103 - 4480 - test_opcua_op - STEP_START - Started execution of step "test_opcua_op".
-ERROR:ConnectionManager:No hay conexión OPC UA disponible para mi_controlador.
-2025-03-25 10:49:41 +0000 - dagster - WARNING - test_all_connections - 2cb43b16-cc9a-4f8d-9d53-c7ff0ba36103 - test_opcua_op - No se pudo obtener cliente OPC UA
-2025-03-25 10:49:41 +0000 - dagster - DEBUG - test_all_connections - 2cb43b16-cc9a-4f8d-9d53-c7ff0ba36103 - 4480 - test_opcua_op - STEP_OUTPUT - Yielded output "result" of type "Any". (Type check passed).
-2025-03-25 10:49:41 +0000 - dagster - DEBUG - test_all_connections - 2cb43b16-cc9a-4f8d-9d53-c7ff0ba36103 - test_opcua_op - Writing file at: /opt/dagster/app/storage/2cb43b16-cc9a-4f8d-9d53-c7ff0ba36103/test_opcua_op/result using PickledObjectFilesystemIOManager...
-2025-03-25 10:49:42 +0000 - dagster - DEBUG - test_all_connections - 2cb43b16-cc9a-4f8d-9d53-c7ff0ba36103 - 4480 - test_opcua_op - HANDLED_OUTPUT - Handled output "result" using IO manager "io_manager"
-2025-03-25 10:49:42 +0000 - dagster - DEBUG - test_all_connections - 2cb43b16-cc9a-4f8d-9d53-c7ff0ba36103 - 4480 - test_opcua_op - STEP_SUCCESS - Finished execution of step "test_opcua_op" in 641ms.
