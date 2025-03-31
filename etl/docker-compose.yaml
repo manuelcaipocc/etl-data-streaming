@@ -137,7 +137,10 @@ services:
       - dockernet
 
   dagster-webserver:  # Dagster Orchestrator (Interfaz Web)
-    build: ./dagsterbosch
+    # build: ./dagsterbosch
+    build:
+      context: .
+      dockerfile: dagsterbosch/Dockerfile
     container_name: dagster-webserver
     environment:
       - DAGSTER_HOME=/opt/dagster/dagster_home 
@@ -146,7 +149,7 @@ services:
       - POSTGRES_USER=boschrexroth
       - POSTGRES_PASSWORD=boschrexroth
       - POSTGRES_DB=automax
-      - PYTHONPATH=/app/src 
+      - PYTHONPATH=/app:/app/dagsterbosch/src 
     ports:
       - "3000:3000"
     volumes:
@@ -157,6 +160,8 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
       - ./dagsterbosch:/opt/dagster/app
       - ./data/logs/dagster:/opt/dagster/logs
+      - .:/app
+      - ./docker-compose.yaml:/app/docker-compose.yaml
     restart: always
     command: ["poetry", "run", "dagster-webserver", "--host", "0.0.0.0", "--port", "3000"]
     depends_on:
@@ -170,7 +175,10 @@ services:
       - dockernet
 
   dagster-daemon: 
-    build: ./dagsterbosch
+    # build: ./dagsterbosch
+    build:
+      context: .
+      dockerfile: dagsterbosch/Dockerfile
     container_name: dagster-daemon
     environment:
       - DAGSTER_HOME=/opt/dagster/dagster_home  
@@ -179,7 +187,7 @@ services:
       - POSTGRES_USER=boschrexroth
       - POSTGRES_PASSWORD=boschrexroth
       - POSTGRES_DB=automax
-      - PYTHONPATH=/app/src 
+      - PYTHONPATH=/app:/app/dagsterbosch/src 
     volumes:
       - dagster_home:/opt/dagster/dagster_home  
       - ./config.yaml:/app/config.yaml
@@ -188,6 +196,8 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
       - ./dagsterbosch:/opt/dagster/app
       - ./data/logs/dagster:/opt/dagster/logs
+      - .:/app
+      - ./docker-compose.yaml:/app/docker-compose.yaml
     command: ["poetry", "run", "dagster-daemon", "run"] 
     restart: always
     depends_on:

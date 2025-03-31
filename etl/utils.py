@@ -4,6 +4,7 @@ from pathlib import Path
 import shutil
 import os
 import json
+import subprocess
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -86,6 +87,28 @@ class utils:
         3. Saves it to 'etl_architecture.txt'.
         """
         utils.save_structure_txt(base_dir)
+
+    def restart_container(container_name, context):
+        """
+        Restarts a specified Docker container.
+
+        Args:
+            container_name (str): The name of the container to restart.
+            context: An object with a 'log' attribute for logging messages.
+        """
+        try:
+            result = subprocess.run(
+                ["docker", "restart", container_name],
+                capture_output=True,
+                text=True
+            )
+            if result.returncode == 0:
+                context.log.info(f"Container {container_name} restarted successfully.")
+            else:
+                context.log.error(f"Failed to restart {container_name}: {result.stderr}")
+        except Exception as e:
+            context.log.error(f"Exception while restarting container: {e}")
+
 
 if __name__ == "__main__":
     utils.organize_project()

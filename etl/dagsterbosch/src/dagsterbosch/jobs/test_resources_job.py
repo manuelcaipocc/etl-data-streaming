@@ -1,5 +1,4 @@
 from dagster import job, op
-from dagster import job, op
 from utils import utils
 from dagsterbosch.resources.connection_resources import (
     connection_manager_resource)

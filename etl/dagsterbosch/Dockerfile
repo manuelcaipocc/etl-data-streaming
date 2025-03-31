@@ -8,24 +8,26 @@ ENV POETRY_HOME="/root/.poetry"
 ENV PATH="$POETRY_HOME/bin:$PATH"
 ENV PYTHONUNBUFFERED=1
 
-# Install system dependencies and Poetry
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    curl build-essential netcat-traditional net-tools && \ 
-    curl -sSL https://install.python-poetry.org | python3 - && \
+# Instala dependencias de sistema necesarias
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    curl build-essential netcat-traditional net-tools docker.io docker-compose && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Set the working directory
-WORKDIR /app
+# Establece directorio de trabajo
+WORKDIR /app/dagsterbosch
 
-# Copy Poetry configuration files
-COPY pyproject.toml poetry.lock ./
+# Instala Poetry
+RUN curl -sSL https://install.python-poetry.org | python3 -
 
-COPY src/ ./src/
+COPY dagsterbosch/pyproject.toml dagsterbosch/poetry.lock ./
+
+
 # Install dependencies using Poetry
 RUN poetry install --no-root
 
-# Copy the application code into the container
-COPY . .
+# Copiar el código restante
+COPY dagsterbosch/ ./
 
 # Start Dagster Webserver
 CMD ["poetry", "run", "dagster-webserver", "--host", "0.0.0.0", "--port", "3000"]
