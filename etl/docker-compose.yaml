@@ -1,17 +1,23 @@
 services:
   postgres-db:  
-    image: postgres:17.4  
+    # image: postgres:17.4 
+    build:
+      context: ./postgresbosch
+      dockerfile: Dockerfile
     container_name: postgres-db
+    command: ["postgres", "-c", "shared_preload_libraries=pg_cron", "-c", "cron.database_name=automax"]
     environment:
       POSTGRES_USER: boschrexroth  
       POSTGRES_PASSWORD: boschrexroth  
-      POSTGRES_DB: automax 
+      POSTGRES_DB: automax
+      PG_CRON_DATABASE_NAME: automax
     mem_limit: 500g  
     ports:
       - "5432:5432"  
     volumes:
       - postgres_data:/var/lib/postgresql/data  
-      - ./postgresbosch/init.sql:/docker-entrypoint-initdb.d/init.sql 
+      - ./postgresbosch/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./postgresbosch/update_pivot_functions.sql:/docker-entrypoint-initdb.d/update_pivot_functions.sql 
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U boschrexroth -d automax"]
       interval: 10s

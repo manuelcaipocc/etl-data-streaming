@@ -85,8 +85,8 @@ def insert_data(conn, batch_data):
         logger.error("Skipping insertion due to invalid data format.")
         return False
     query = """
-    INSERT INTO sandbox.ctrlx_data (NamespaceIndex, RouteName, BrowseName, Value, DataType, Timestamp, Code, CtrlX_Name, Site, is_run_status)
-    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+    INSERT INTO sandbox.ctrlx_data (NamespaceIndex, RouteName, BrowseName, Value, DataType, Timestamp, Code, CtrlX_Name, Site, is_run_status,table_storage)
+    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s,%s)
     """
     try:
         with conn.cursor() as cursor:
@@ -99,7 +99,8 @@ def insert_data(conn, batch_data):
                         generate_code(d["BrowseName"]),
                         d["CtrlX_Name"],
                         d["Site"],
-                        d["is_run_status"]
+                        d["is_run_status"],
+                        d["table_storage"]
                         ) for d in batch_data]
             cursor.executemany(query, records)
             conn.commit()

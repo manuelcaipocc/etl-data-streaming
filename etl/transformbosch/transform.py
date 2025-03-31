@@ -112,7 +112,8 @@ class SolaceMessageHandler(MessageHandler):
                 "DataType": raw_data["DataType"],
                 "processed": True,
                 "Timestamp": raw_data["Timestamp"],
-                "is_run_status": raw_data["is_run_status"]
+                "is_run_status": raw_data["is_run_status"],
+                "table_storage": raw_data["table_storage"]
             }
 
             publish_to_solace(self.solace_publisher, config["solace"]["topics"]["transformed_data"][0], transformed_data)

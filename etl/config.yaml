@@ -18,6 +18,7 @@ opcua:
           update_interval: 1000
           variation_threshold: 0.05            # 5% of variation
           is_run_status: False
+          table_storage: 1M
           simulation_value: 100                 # use with simulated 
           variation_simulation: 0.06           # 6 % of variation with simulated ctrlX
 
@@ -28,6 +29,7 @@ opcua:
           Level: 10
           update_interval: 1000
           is_run_status: True
+          table_storage : 1M
           simulation_value: True
           variation_simulation: 5    #after 2 seconds it changes to the invert boolean value
 
@@ -60,6 +62,7 @@ opcua:
         #   Level: 8
         #   update_interval: 100
         #   is_run_status: True
+        #   table_storage: 1M
 
         # - NodeId: "ns=2;s=plc/app/Application/sym/PLC_PRG/bBlinkOld"  
         #   NamespaceIndex: 2
@@ -68,6 +71,7 @@ opcua:
         #   Level: 8
         #   update_interval: 100
         #   is_run_status: True
+        #   table_storage: 1M
 
         # - NodeId: "ns=2;s=plc/app/Application/sym/PLC_PRG/bStartOpModeChange" 
         #   NamespaceIndex: 2
@@ -76,6 +80,7 @@ opcua:
         #   Level: 8
         #   update_interval: 100
         #   is_run_status: True
+        #   table_storage: 1M
 
         # - NodeId: "ns=2;s=plc/app/Application/sym/PLC_PRG/rDistancePercent" 
         #   NamespaceIndex: 2
@@ -85,6 +90,7 @@ opcua:
         #   update_interval: 100
         #   variation_threshold: 0.05  # 5% of variation
         #   is_run_status: False
+        #   table_storage: 1M
 
         # - NodeId: "ns=2;s=plc/app/Application/sym/GVL_HMI/P_s"
         #   NamespaceIndex: 2
@@ -94,6 +100,7 @@ opcua:
         #   update_interval: 100
         #   variation_threshold: 0.05  # 5% of variation
         #   is_run_status: False
+        #   table_storage: 1M
 
         # - NodeId: "ns=2;s=plc/app/Application/sym/GVL_HMI/P_a"
         #   NamespaceIndex: 2
@@ -103,6 +110,7 @@ opcua:
         #   update_interval: 100
         #   variation_threshold: 0.05  # 5% of variation
         #   is_run_status: False
+        #   table_storage: 1M
 
         # - NodeId: "ns=2;s=plc/app/Application/sym/GVL_HMI/P_b"
         #   NamespaceIndex: 2
@@ -112,6 +120,7 @@ opcua:
         #   update_interval: 1
         #   variation_threshold: 0.05  # 5% of variation
         #   is_run_status: False
+        #   table_storage: 1M
 
         # - NodeId: "ns=2;s=plc/app/Application/sym/GVL_HMI/V"
         #   NamespaceIndex: 2
@@ -120,6 +129,7 @@ opcua:
         #   Level: 8
         #   variation_threshold: 0.05  # 5% of variation
         #   is_run_status: False
+        #   table_storage: 1M
 
         - NodeId: "ns=2;s=plc/app/Station2/sym/Monitoring/rEnergyConsumption"
           NamespaceIndex: 2
@@ -129,6 +139,7 @@ opcua:
           update_interval: 1000      # miliseconds 
           variation_threshold: 0.05  # 5% of variation
           is_run_status: False
+          table: 1M
           simulation_value: 100              # use with simulated 
           variation_simulation: 0.06  # 6 % of variation with simulated ctrlX
 
@@ -139,6 +150,7 @@ opcua:
           Level: 7
           update_interval: 1000
           is_run_status: True
+          table: 1M
           simulation_value: True            # use with simulated 
           variation_simulation: 4  # 6 % of variation with simulated ctrlX
 

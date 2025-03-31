@@ -62,10 +62,12 @@ def extract_sensor_data(opcua_client, solace_publisher, node, ctrlx_name, site):
     update_interval = node.get("update_interval", 1000) / 1000  # Conversión de ms a s
     variation_threshold = node.get("variation_threshold", 0.05)
     is_run_status = node.get("is_run_status", False)
-
+    table_destiny = node.get("table","1M")
+    
     node_id = f"ns={namespace_index};s={route_name}"
     last_values[node_id] = None
     initial_publishes[node_id] = 0  # Contador de publicaciones iniciales obligatorias
+    last_publish_time = time.time()
 
     time.sleep(5)  # Esperar 5 segundos antes de comenzar la extracción de datos
 
@@ -76,21 +78,31 @@ def extract_sensor_data(opcua_client, solace_publisher, node, ctrlx_name, site):
             timestamp = datetime.utcnow().isoformat() + "Z"
 
             should_publish = False
+            now=time.time()
             
             if initial_publishes[node_id] < 10:
                 should_publish = True
                 initial_publishes[node_id] += 1
+                last_publish_time = now
             else:
                 last_value = last_values[node_id]
                 if is_run_status:  # Booleano: Publicar solo si hay un cambio
                     if last_value is None or value != last_value:
                         should_publish = True
+                        last_publish_time = now
                 else:  # Numérico: Publicar si el cambio es mayor al umbral
                     if last_value is not None:
                         delta = abs(value - last_value) / (abs(last_value) + 1e-9)
                         if delta >= variation_threshold:
                             should_publish = True
-
+                            last_publish_time = now
+                            
+                # New condition: publish if 10 minutes have passed without changes
+                if (now - last_publish_time) >= 600:
+                    logger.info(f"10 minutes without changes in {browse_name} - publishing current value.")
+                    should_publish = True
+                    last_publish_time = now
+                
             if should_publish:
                 last_values[node_id] = value
                 variable_data = {
@@ -103,7 +115,8 @@ def extract_sensor_data(opcua_client, solace_publisher, node, ctrlx_name, site):
                     "DataType": "Boolean" if is_run_status else "Float",
                     "processed": False,
                     "Timestamp": timestamp,
-                    "is_run_status": is_run_status
+                    "is_run_status": is_run_status,
+                    "table_storage": table_destiny
                 }
                 publish_to_solace(solace_publisher, global_config["solace"]["topics"]["raw_data"][0], variable_data)
 
