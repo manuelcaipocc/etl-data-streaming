@@ -6,7 +6,7 @@ read_packages_key.text
 __pycache__/
 *.py[cod]
 *$py.class
-
+.vscode
 # Distribution / packaging
 .Python
 
