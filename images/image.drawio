@@ -1,0 +1,66 @@
+<mxfile host="65bd71144e">
+    <diagram id="auMxHu1rH9dFZ_FCnhKn" name="Page-1">
+        <mxGraphModel dx="811" dy="592" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="583" math="0" shadow="0">
+            <root>
+                <mxCell id="0"/>
+                <mxCell id="1" parent="0"/>
+                <mxCell id="28" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;" vertex="1" parent="1">
+                    <mxGeometry x="53" y="166" width="717" height="214" as="geometry"/>
+                </mxCell>
+                <mxCell id="10" style="edgeStyle=none;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;fontColor=#33FF33;fontSize=12;" edge="1" parent="1" source="2" target="4">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="12" value="OK" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontColor=#00CC00;" vertex="1" connectable="0" parent="10">
+                    <mxGeometry x="0.1289" y="-2" relative="1" as="geometry">
+                        <mxPoint as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="24" value="DONE!" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontColor=#3333FF;" vertex="1" connectable="0" parent="10">
+                    <mxGeometry x="0.1511" y="-4" relative="1" as="geometry">
+                        <mxPoint x="-12" y="-4" as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="2" value="Signals from sensors" style="whiteSpace=wrap;html=1;aspect=fixed;" vertex="1" parent="1">
+                    <mxGeometry x="73" y="241" width="80" height="80" as="geometry"/>
+                </mxCell>
+                <mxCell id="4" value="CtrlX" style="whiteSpace=wrap;html=1;aspect=fixed;" vertex="1" parent="1">
+                    <mxGeometry x="243" y="241" width="80" height="80" as="geometry"/>
+                </mxCell>
+                <mxCell id="6" value="Data Base" style="whiteSpace=wrap;html=1;aspect=fixed;" vertex="1" parent="1">
+                    <mxGeometry x="413" y="241" width="80" height="80" as="geometry"/>
+                </mxCell>
+                <mxCell id="14" style="edgeStyle=none;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;fontColor=#33FF33;fontSize=12;" edge="1" parent="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="323" y="280.58" as="sourcePoint"/>
+                        <mxPoint x="413" y="280.58" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="15" value="DONE!" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontColor=#009900;" vertex="1" connectable="0" parent="14">
+                    <mxGeometry x="0.1289" y="-2" relative="1" as="geometry">
+                        <mxPoint x="-11" y="-2" as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="18" value="Use Cases:&lt;br&gt;-AI Applications&lt;div&gt;-Automatic Reports of historical Analysis&lt;/div&gt;&lt;div&gt;-Warehouse integration&lt;/div&gt;" style="whiteSpace=wrap;html=1;aspect=fixed;" vertex="1" parent="1">
+                    <mxGeometry x="623" y="226" width="110" height="110" as="geometry"/>
+                </mxCell>
+                <mxCell id="20" style="edgeStyle=none;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;fontColor=#33FF33;fontSize=12;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" target="18">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="493" y="280.5" as="sourcePoint"/>
+                        <mxPoint x="583" y="280.5" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="21" value="Progress&lt;br&gt;deadline 22.04.25" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontColor=#FF0080;" vertex="1" connectable="0" parent="20">
+                    <mxGeometry x="0.1289" y="-2" relative="1" as="geometry">
+                        <mxPoint x="-13" y="19" as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="25" value="Dataflow Jobs" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontStyle=3" vertex="1" parent="1">
+                    <mxGeometry x="523" y="201" width="60" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="26" value="ETL" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontColor=#000000;fontStyle=3" vertex="1" parent="1">
+                    <mxGeometry x="333" y="201" width="60" height="30" as="geometry"/>
+                </mxCell>
+            </root>
+        </mxGraphModel>
+    </diagram>
+</mxfile>

@@ -17,7 +17,8 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data  
       - ./postgresbosch/init.sql:/docker-entrypoint-initdb.d/init.sql
-      - ./postgresbosch/update_pivot_functions.sql:/docker-entrypoint-initdb.d/update_pivot_functions.sql 
+      - ./postgresbosch/register_cron_jobs.sql:/docker-entrypoint-initdb.d/register_cron_jobs.sql
+      - ./postgresbosch/init-entrypoint.sh:/docker-entrypoint-initdb.d/z_init-entrypoint.sh
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U boschrexroth -d automax"]
       interval: 10s

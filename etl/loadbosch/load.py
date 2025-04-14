@@ -24,6 +24,7 @@ postgres_config = config.get("postgres", {})
 DB_WRITE_INTERVAL = postgres_config.get("write_interval", 1)  # Default value 1 second
 DB_BATCH_SIZE = postgres_config.get("batch_size", 100)  # Minimum batch size before writing
 BACKUP_DIR = "backup_data"
+INITIAL_UPLOAD_DURATION=postgres_config.get("initial_upload_duration", 20)
 
 data_buffer = []
 buffer_lock = threading.Lock()
@@ -96,7 +97,7 @@ def insert_data(conn, batch_data):
                         float(d["Value"]) if isinstance(d["Value"], (bool, int)) else d["Value"],
                         d["DataType"],
                         d["Timestamp"],
-                        generate_code(d["BrowseName"]),
+                        d["CtrlX_Name"]+"_"+generate_code(d["BrowseName"]),
                         d["CtrlX_Name"],
                         d["Site"],
                         d["is_run_status"],
@@ -134,8 +135,11 @@ def database_writer():
     last_write_time = time.time()
     while True:
         time.sleep(0.1)
+        current_time = time.time()
+
         with buffer_lock:
-            if len(data_buffer) >= DB_BATCH_SIZE or (time.time() - last_write_time) >= DB_WRITE_INTERVAL:
+            # Fase 1: primeros 20 segundos — subir todo lo más rápido posible
+            if (current_time - start_time) <= INITIAL_UPLOAD_DURATION:
                 if data_buffer:
                     try:
                         if not insert_data(conn, data_buffer):
@@ -143,12 +147,28 @@ def database_writer():
                         else:
                             process_backup_files(conn)
                         data_buffer.clear()
-                        last_write_time = time.time()
+                        last_write_time = current_time
                     except psycopg2.OperationalError:
                         logger.error("Lost PostgreSQL connection. Reconnecting...")
                         conn = get_postgres_connection()
                     except Exception as e:
                         logger.error(f"Unexpected error in database_writer: {e}")
+            # Fase 2: comportamiento por lotes
+            elif len(data_buffer) >= DB_BATCH_SIZE or (current_time - last_write_time) >= DB_WRITE_INTERVAL:
+                if data_buffer:
+                    try:
+                        if not insert_data(conn, data_buffer):
+                            save_to_backup(data_buffer)
+                        else:
+                            process_backup_files(conn)
+                        data_buffer.clear()
+                        last_write_time = current_time
+                    except psycopg2.OperationalError:
+                        logger.error("Lost PostgreSQL connection. Reconnecting...")
+                        conn = get_postgres_connection()
+                    except Exception as e:
+                        logger.error(f"Unexpected error in database_writer: {e}")
+
 
 if __name__ == "__main__":
     manager = ConnectionManager() 
@@ -164,6 +184,8 @@ if __name__ == "__main__":
 
     solace_subscriber.start()
     solace_subscriber.receive_async(SolaceLoadHandler())
+    
+    start_time = time.time() 
     threading.Thread(target=database_writer, daemon=True).start()
     logger.info("Listening for messages on transformed_data...")
 

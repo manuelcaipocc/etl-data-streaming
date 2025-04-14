@@ -26,11 +26,14 @@ etl/
 │    │        ├── jobs/
 │    │        │    ├── __init__.py
 │    │        │    ├── dummy_job.py
+│    │        │    ├── monitor_resources_job.py
 │    │        │    └── test_resources_job.py
 │    │        ├── main.py
 │    │        ├── resources/
 │    │        │    ├── __init__.py
 │    │        │    └── connection_resources.py
+│    │        ├── schedules/
+│    │        │    └── schedule_monitor.py
 │    │        └── sensors/
 │    │            ├── __init__.py
 │    │            └── extract_monitor_sensor.py
@@ -61,7 +64,12 @@ etl/
 │    ├── poetry.lock
 │    └── pyproject.toml
 ├── postgresbosch/
+│    ├── Dockerfile
+│    ├── init-entrypoint.sh
 │    ├── init.sql
+│    ├── pivot-test.sql
+│    ├── register_cron_jobs.sql
+│    ├── update_pivot_functions.sql/
 │    └── update_schema.sql
 ├── solacebosch/
 │    └── solace_start.sh

@@ -15,11 +15,11 @@ opcua:
           RouteName: "plc/app/Station1/sym/Monitoring/rEnergyConsumption"
           BrowseName: "rEnergyConsumption"
           level: 8
-          update_interval: 1000
-          variation_threshold: 0.05            # 5% of variation
-          is_run_status: False
-          table_storage: 1M
-          simulation_value: 100                 # use with simulated 
+          update_interval: 1000                # time in miliseconds
+          variation_threshold: 0.05            # save if the variation is higher than 5%
+          is_run_status: False                 # is a bool
+          table_storage: 1M                    # Table to save
+          simulation_value: 100                # use with simulated 
           variation_simulation: 0.06           # 6 % of variation with simulated ctrlX
 
         - NodeId: "ns=2;s=framework/bundles/com_boschrexroth_plc_system/active"
@@ -35,12 +35,13 @@ opcua:
 
     - name: "CtrlX_2"
       site: Cube-Ulm
-      # server_url_client: "opc.tcp://192.168.1.20:4840"      #Use with real CtrlX
+      # server_url_client: "opc.tcp://192.168.1.1:4840"      #Use with real CtrlX
       server_url_server: "opc.tcp://0.0.0.0:4841"             #Use with simulated CtrlX
       server_url_client: "opc.tcp://ctrlx-nodes:4841"         #Use with simulated CtrlX
       namespace: 192.168.1.1
       username: "boschrexroth"                        # Fill with real Ctrlx
-      password: "boschrexroth"                        # Fill with real Ctrlx
+      password: "boschrexroth"
+      # password: "Boschrexroth1"                        # Fill with real Ctrlx
 
       #Fill with CtrlX with security
       interface: 15
@@ -92,44 +93,53 @@ opcua:
         #   is_run_status: False
         #   table_storage: 1M
 
-        # - NodeId: "ns=2;s=plc/app/Application/sym/GVL_HMI/P_s"
-        #   NamespaceIndex: 2
-        #   RouteName: "plc/app/Application/sym/GVL_HMI/P_s"
-        #   BrowseName: "P_s"
-        #   Level: 8
-        #   update_interval: 100
-        #   variation_threshold: 0.05  # 5% of variation
-        #   is_run_status: False
-        #   table_storage: 1M
+        - NodeId: "ns=2;s=plc/app/Application/sym/GVL_HMI/P_s"
+          NamespaceIndex: 2
+          RouteName: "plc/app/Application/sym/GVL_HMI/P_s"
+          BrowseName: "P_s"
+          Level: 8
+          update_interval: 1000
+          variation_threshold: 0.01  # 5% of variation
+          is_run_status: False
+          table_storage: 1S
+          simulation_value: 100                # use with simulated 
+          variation_simulation: 0.06           # 6 % of variation with simulated ctrlX
 
-        # - NodeId: "ns=2;s=plc/app/Application/sym/GVL_HMI/P_a"
-        #   NamespaceIndex: 2
-        #   RouteName: "plc/app/Application/sym/GVL_HMI/P_a"
-        #   BrowseName: "P_a"
-        #   Level: 8
-        #   update_interval: 100
-        #   variation_threshold: 0.05  # 5% of variation
-        #   is_run_status: False
-        #   table_storage: 1M
+        - NodeId: "ns=2;s=plc/app/Application/sym/GVL_HMI/P_a"
+          NamespaceIndex: 2
+          RouteName: "plc/app/Application/sym/GVL_HMI/P_a"
+          BrowseName: "P_a"
+          Level: 8
+          update_interval: 1000
+          variation_threshold: 0.05  # 5% of variation
+          is_run_status: False
+          table_storage: 1S
+          simulation_value: 100                
+          variation_simulation: 0.06           
 
-        # - NodeId: "ns=2;s=plc/app/Application/sym/GVL_HMI/P_b"
-        #   NamespaceIndex: 2
-        #   RouteName: "plc/app/Application/sym/GVL_HMI/P_b"
-        #   BrowseName: "P_b"
-        #   Level: 8
-        #   update_interval: 1
-        #   variation_threshold: 0.05  # 5% of variation
-        #   is_run_status: False
-        #   table_storage: 1M
+        - NodeId: "ns=2;s=plc/app/Application/sym/GVL_HMI/P_b"
+          NamespaceIndex: 2
+          RouteName: "plc/app/Application/sym/GVL_HMI/P_b"
+          BrowseName: "P_b"
+          Level: 8
+          update_interval: 1000
+          variation_threshold: 0.05  # 5% of variation
+          is_run_status: False
+          table_storage: 500mS
+          simulation_value: 100                
+          variation_simulation: 0.06
 
-        # - NodeId: "ns=2;s=plc/app/Application/sym/GVL_HMI/V"
-        #   NamespaceIndex: 2
-        #   RouteName: "plc/app/Application/sym/GVL_HMI/V"
-        #   BrowseName: "V"
-        #   Level: 8
-        #   variation_threshold: 0.05  # 5% of variation
-        #   is_run_status: False
-        #   table_storage: 1M
+        - NodeId: "ns=2;s=plc/app/Application/sym/GVL_HMI/V"
+          NamespaceIndex: 2
+          RouteName: "plc/app/Application/sym/GVL_HMI/V"
+          BrowseName: "V"
+          Level: 8
+          update_interval: 1000      # miliseconds 
+          variation_threshold: 0.05  # 5% of variation
+          is_run_status: False
+          table_storage: 500mS
+          simulation_value: 100                
+          variation_simulation: 0.06
 
         - NodeId: "ns=2;s=plc/app/Station2/sym/Monitoring/rEnergyConsumption"
           NamespaceIndex: 2
@@ -139,7 +149,7 @@ opcua:
           update_interval: 1000      # miliseconds 
           variation_threshold: 0.05  # 5% of variation
           is_run_status: False
-          table: 1M
+          table_storage: 500mS
           simulation_value: 100              # use with simulated 
           variation_simulation: 0.06  # 6 % of variation with simulated ctrlX
 
@@ -150,9 +160,9 @@ opcua:
           Level: 7
           update_interval: 1000
           is_run_status: True
-          table: 1M
+          table_storage: 1S
           simulation_value: True            # use with simulated 
-          variation_simulation: 4  # 6 % of variation with simulated ctrlX
+          variation_simulation: 4           # 6 % of variation with simulated ctrlX
 
 solace:
   host: solace-broker
@@ -174,3 +184,4 @@ postgres:
   table: ctrlx_data
   write_interval: 60
   batch_size: 100
+  initial_upload_duration: 20

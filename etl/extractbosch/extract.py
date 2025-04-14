@@ -62,7 +62,7 @@ def extract_sensor_data(opcua_client, solace_publisher, node, ctrlx_name, site):
     update_interval = node.get("update_interval", 1000) / 1000  # Conversión de ms a s
     variation_threshold = node.get("variation_threshold", 0.05)
     is_run_status = node.get("is_run_status", False)
-    table_destiny = node.get("table","1M")
+    table_destiny = node.get("table_storage","1M")
     
     node_id = f"ns={namespace_index};s={route_name}"
     last_values[node_id] = None
