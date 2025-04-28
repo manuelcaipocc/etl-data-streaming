@@ -1,4 +1,4 @@
--- Crear la base de datos solo si no existe
+-- Create the database only if it does not exist
 DO
 $$
 BEGIN
@@ -12,11 +12,11 @@ $$;
 CREATE EXTENSION IF NOT EXISTS pg_cron;
 ALTER SYSTEM SET cron.database_name = 'automax';
 
--- Crear el esquema y la tabla dentro de "automax"
+-- Create the schema and table within "automax"
 DO
 $$
 BEGIN
--- Solo ejecutar si estamos dentro de "automax"
+-- Execute only if the current database is "automax"
     IF current_database() = 'automax' THEN
         CREATE SCHEMA IF NOT EXISTS sandbox;
 
@@ -36,7 +36,7 @@ BEGIN
             CONSTRAINT unique_entry UNIQUE (NamespaceIndex, RouteName, Timestamp, CtrlX_Name, Site) 
         );
 
-        -- Crear índices para mejorar el rendimiento de las consultas
+        -- Create indexes to improve query performance
         CREATE INDEX IF NOT EXISTS idx_timestamp ON sandbox.ctrlx_data (Timestamp);
         CREATE INDEX IF NOT EXISTS idx_routename ON sandbox.ctrlx_data (RouteName);
         CREATE INDEX IF NOT EXISTS idx_ctrlx_name ON sandbox.ctrlx_data (CtrlX_Name);
@@ -66,7 +66,7 @@ BEGIN
         );
 
 
-        --signals
+        -- Create the signals table        --signals
 
         CREATE TABLE sandbox.ctrlx_signals (
         code TEXT PRIMARY KEY,               -- Ej. 'P_A'
@@ -87,6 +87,7 @@ $$;
 --\i /docker-entrypoint-initdb.d/update_pivot_functions.sql
 
 --------------------------------------------------------------
+-- Function to initialize columns in a pivot table for a given frequency
 CREATE OR REPLACE FUNCTION sandbox.initialize_columns_for_frequency(frequency TEXT)
 RETURNS void AS $$
 DECLARE
@@ -173,6 +174,7 @@ $$ LANGUAGE plpgsql;
 
 
 --------------------------------------------------------------
+-- Function to initialize columns in a temporary table for a given frequency
 CREATE OR REPLACE FUNCTION sandbox.initialize_tmp_columns_for_frequency(frequency TEXT)
 RETURNS void AS $$
 DECLARE
@@ -226,6 +228,7 @@ $$ LANGUAGE plpgsql;
 
 
 -----------------------------------------------------------------------
+-- Function to pivot data from ctrlx_data into a temporary table for a given frequency
 CREATE OR REPLACE FUNCTION sandbox.pivot_ctrlx_data(frequency TEXT)
 RETURNS void AS $$
 DECLARE
@@ -281,6 +284,11 @@ BEGIN
        OR (frequency = '1S' AND table_storage IN ('1S', '500mS'))
        OR (frequency = '1M' AND table_storage IN ('1M', '1S', '500mS'));
 
+    IF signals IS NULL THEN
+        RAISE NOTICE 'No signals defined for frequency %, skipping data insertion.', frequency;
+        RETURN;
+    END IF;
+    
     RAISE NOTICE 'Signal aggregation expression generated. Inserting data into %', tmp_table;
 
     -- Insert pivoted data
@@ -299,6 +307,7 @@ $$ LANGUAGE plpgsql;
 
 
 ------------------------------------------------------------------------
+-- Function to ensure that the pivot table has all the necessary columns from the source table
 CREATE OR REPLACE FUNCTION sandbox.ensure_columns_exist(pivot_table TEXT, source_table TEXT)
 RETURNS void AS $$
 DECLARE
@@ -333,12 +342,14 @@ $$ LANGUAGE plpgsql;
 
 
 ----------------------------------------------------------
+-- Function to synchronize data from the temporary pivot table to the main pivot table
 CREATE OR REPLACE FUNCTION sandbox.sync_ctrlx_pivot_table(frequency TEXT)
 RETURNS void AS $$
 DECLARE
     tmp_table TEXT;
     pivot_table TEXT;
     tmp_table_exists BOOLEAN;
+    row_count INTEGER;
 BEGIN
     RAISE NOTICE 'Starting sync_ctrlx_pivot_table with frequency: %', frequency;
 
@@ -369,10 +380,20 @@ BEGIN
         RETURN;
     END IF;
 
+    -- Check if temporary table has rows
+    EXECUTE format('SELECT COUNT(*) FROM %s', tmp_table) INTO row_count;
+
+    IF row_count = 0 THEN
+        RAISE NOTICE 'Temporary table % is empty. Skipping data insertion.', tmp_table;
+        RETURN;
+    END IF;
+
     RAISE NOTICE 'Ensuring pivot table has all necessary columns...';
+    -- Ensure the main pivot table has all columns present in the temporary table
     PERFORM sandbox.ensure_columns_exist(pivot_table, tmp_table);
 
     RAISE NOTICE 'Inserting new data into pivot table %...', pivot_table;
+    -- Insert new data from the temporary table to the main pivot table, avoiding duplicates based on timestamp
     EXECUTE format(
         'INSERT INTO %s
          SELECT *
