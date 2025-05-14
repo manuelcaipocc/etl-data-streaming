@@ -97,9 +97,9 @@ def extract_sensor_data(opcua_client, solace_publisher, node, ctrlx_name, site):
                             should_publish = True
                             last_publish_time = now
                             
-                # New condition: publish if 10 minutes have passed without changes
-                if (now - last_publish_time) >= 600:
-                    logger.info(f"10 minutes without changes in {browse_name} - publishing current value.")
+                # New condition: publish if 1 minutes have passed without changes
+                if (now - last_publish_time) >= global_config["postgres"]["no_variation_publish"]:
+                    logger.info(f"1 minutes without changes in {browse_name} - publishing current value.")
                     should_publish = True
                     last_publish_time = now
                 

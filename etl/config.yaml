@@ -18,24 +18,24 @@ opcua:
           update_interval: 1000                # time in miliseconds
           variation_threshold: 0.05            # save if the variation is higher than 5%
           is_run_status: False                 # is a bool
-          table_storage: 1M                    # Table to save
+          table_storage: 1S                    # Table to save
           simulation_value: 100                # use with simulated 
-          variation_simulation: 0.06           # 6 % of variation with simulated ctrlX
+          variation_simulation: 0.1           # 6 % of variation with simulated ctrlX
 
-        # - NodeId: "ns=2;s=framework/bundles/com_boschrexroth_plc_system/active"
-        #   NamespaceIndex: 2
-        #   RouteName: "framework/bundles/com_boschrexroth_plc_system/active"
-        #   BrowseName: "active"
-        #   Level: 10
-        #   update_interval: 1000
-        #   is_run_status: True
-        #   table_storage : 1M
-        #   simulation_value: True
-        #   variation_simulation: 5    #after 2 seconds it changes to the invert boolean value
+        - NodeId: "ns=2;s=framework/bundles/com_boschrexroth_plc_system/active"
+          NamespaceIndex: 2
+          RouteName: "framework/bundles/com_boschrexroth_plc_system/active"
+          BrowseName: "active"
+          Level: 10
+          update_interval: 1000
+          is_run_status: True
+          table_storage : 1M
+          simulation_value: True
+          variation_simulation: 5    #after 2 seconds it changes to the invert boolean value
 
     - name: "CtrlX_2"
       site: Cube-Ulm
-      # server_url_client: "opc.tcp://192.168.1.1:4840"      #Use with real CtrlX
+      # server_url_client: "opc.tcp://192.168.1.20:4840"          #Use with real CtrlX
       server_url_server: "opc.tcp://0.0.0.0:4841"             #Use with simulated CtrlX
       server_url_client: "opc.tcp://ctrlx-nodes:4841"         #Use with simulated CtrlX
       namespace: 192.168.1.1
@@ -117,29 +117,29 @@ opcua:
         #   simulation_value: 100                
         #   variation_simulation: 0.06           
 
-        # - NodeId: "ns=2;s=plc/app/Application/sym/GVL_HMI/P_b"
-        #   NamespaceIndex: 2
-        #   RouteName: "plc/app/Application/sym/GVL_HMI/P_b"
-        #   BrowseName: "P_b"
-        #   Level: 8
-        #   update_interval: 1000
-        #   variation_threshold: 0.05  # 5% of variation
-        #   is_run_status: False
-        #   table_storage: 500mS
-        #   simulation_value: 100                
-        #   variation_simulation: 0.06
+        - NodeId: "ns=2;s=plc/app/Application/sym/GVL_HMI/P_b"
+          NamespaceIndex: 2
+          RouteName: "plc/app/Application/sym/GVL_HMI/P_b"
+          BrowseName: "P_b"
+          Level: 8
+          update_interval: 1000
+          variation_threshold: 0.05  # 5% of variation
+          is_run_status: False
+          table_storage: 500mS
+          simulation_value: 200                
+          variation_simulation: 0.1
 
-        # - NodeId: "ns=2;s=plc/app/Application/sym/GVL_HMI/V"
-        #   NamespaceIndex: 2
-        #   RouteName: "plc/app/Application/sym/GVL_HMI/V"
-        #   BrowseName: "V"
-        #   Level: 8
-        #   update_interval: 1000      # miliseconds 
-        #   variation_threshold: 0.05  # 5% of variation
-        #   is_run_status: False
-        #   table_storage: 500mS
-        #   simulation_value: 100                
-        #   variation_simulation: 0.06
+        - NodeId: "ns=2;s=plc/app/Application/sym/GVL_HMI/V"
+          NamespaceIndex: 2
+          RouteName: "plc/app/Application/sym/GVL_HMI/V"
+          BrowseName: "V"
+          Level: 8
+          update_interval: 1000      # miliseconds 
+          variation_threshold: 0.05  # 5% of variation
+          is_run_status: False
+          table_storage: 500mS
+          simulation_value: 300                
+          variation_simulation: 0.1
 
         - NodeId: "ns=2;s=plc/app/Station2/sym/Monitoring/rEnergyConsumption"
           NamespaceIndex: 2
@@ -150,8 +150,8 @@ opcua:
           variation_threshold: 0.05  # 5% of variation
           is_run_status: False
           table_storage: 1S
-          simulation_value: 100              # use with simulated 
-          variation_simulation: 0.06  # 6 % of variation with simulated ctrlX
+          simulation_value: 400              # use with simulated 
+          variation_simulation: 0.1  # 6 % of variation with simulated ctrlX
 
         - NodeId: "ns=2;s=system/apps/installed/snap_snapd/enabled"  
           NamespaceIndex: 2
@@ -183,5 +183,6 @@ postgres:
   schema: sandbox
   table: ctrlx_data
   write_interval: 60
+  no_variation_publish: 60
   batch_size: 100
   initial_upload_duration: 20

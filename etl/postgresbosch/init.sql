@@ -75,7 +75,8 @@ BEGIN
         site TEXT,                          -- Ej. 'Cube-Ulm'
         is_run_status BOOLEAN,
         datatype TEXT,
-        table_storage VARCHAR(20) NOT NULL
+        table_storage VARCHAR(20) NOT NULL,
+        frequency TEXT
         );
         
     END IF;
@@ -87,7 +88,50 @@ $$;
 --\i /docker-entrypoint-initdb.d/update_pivot_functions.sql
 
 --------------------------------------------------------------
+-- Function to reorder columns in a table (timestamp first, then alphabetical)
+CREATE OR REPLACE FUNCTION sandbox.reorder_table_columns(table_name TEXT)
+RETURNS void AS $$
+DECLARE
+    new_columns TEXT;
+    current_columns TEXT[];
+BEGIN
+    -- Get current columns in the table
+    SELECT array_agg(cols.column_name::text ORDER BY 
+                    CASE WHEN cols.column_name = 'timestamp' THEN 0 ELSE 1 END,
+                    cols.column_name)
+    INTO current_columns
+    FROM information_schema.columns AS cols
+    WHERE cols.table_schema = 'sandbox'
+    AND cols.table_name = split_part(reorder_table_columns.table_name, '.', 2);
+    
+    -- Build the new column list
+    SELECT string_agg(quote_ident(col), ', ')
+    INTO new_columns
+    FROM unnest(current_columns) AS col;
+    
+    -- Only proceed if we have columns
+    IF new_columns IS NOT NULL THEN
+        -- Create a temporary table with the new order
+        EXECUTE format('CREATE TEMP TABLE temp_reorder AS SELECT %s FROM %s', new_columns, table_name);
+        
+        -- Truncate the original table
+        EXECUTE format('TRUNCATE TABLE %s', table_name);
+        
+        -- Insert back with new order
+        EXECUTE format('INSERT INTO %s SELECT %s FROM temp_reorder', table_name, new_columns);
+        
+        -- Drop the temporary table
+        EXECUTE 'DROP TABLE temp_reorder';
+        
+        RAISE NOTICE 'Columns in table % reordered successfully', table_name;
+    END IF;
+END;
+$$ LANGUAGE plpgsql;
+
+
+--------------------------------------------------------------
 -- Function to initialize columns in a pivot table for a given frequency
+
 CREATE OR REPLACE FUNCTION sandbox.initialize_columns_for_frequency(frequency TEXT)
 RETURNS void AS $$
 DECLARE
@@ -95,6 +139,9 @@ DECLARE
     r RECORD;
     col_exists BOOLEAN;
     pivot_table_exists BOOLEAN;
+    column_list TEXT[];
+    col_name TEXT;
+    column_datatype TEXT;
 BEGIN
     RAISE NOTICE 'Starting initialize_columns_for_frequency with input: %', frequency;
 
@@ -125,52 +172,59 @@ BEGIN
 
     RAISE NOTICE 'Pivot table exists. Beginning column check and creation...';
 
-    -- Iterate over relevant signals
-    FOR r IN
-        SELECT code, datatype FROM sandbox.ctrlx_signals
-        WHERE (frequency = '500mS' AND table_storage = '500mS')
-        OR (frequency = '1S' AND table_storage IN ('1S', '500mS'))
-        OR (frequency = '1M' AND table_storage IN ('1M', '1S', '500mS'))
-    LOOP
-        -- Check if the column already exists
-        SELECT EXISTS (
-            SELECT 1
-            FROM information_schema.columns
-            WHERE table_schema = 'sandbox'
-            AND table_name = split_part(pivot_table, '.', 2)
-            AND column_name = r.code
-        ) INTO col_exists;
+    -- First collect all column names to add, sorted alphabetically
+    SELECT array_agg(code ORDER BY code)
+    INTO column_list
+    FROM sandbox.ctrlx_signals
+    WHERE (ctrlx_signals.frequency = '500mS' AND table_storage = '500mS')
+    OR (ctrlx_signals.frequency = '1S' AND table_storage IN ('1S', '500mS'))
+    OR (ctrlx_signals.frequency = '1M' AND table_storage IN ('1M', '1S', '500mS'));
 
-        -- If not, add it
-        IF NOT col_exists THEN
-            RAISE NOTICE 'Adding column % to table %', r.code, pivot_table;
+    -- Add columns in alphabetical order
+    IF column_list IS NOT NULL THEN
+        FOREACH col_name IN ARRAY column_list LOOP
+            -- Get the datatype for this column
+            SELECT datatype INTO column_datatype
+            FROM sandbox.ctrlx_signals
+            WHERE code = col_name LIMIT 1;
 
-            EXECUTE format(
-                'ALTER TABLE %s ADD COLUMN %I %s',
-                pivot_table,
-                r.code,
-                CASE r.datatype
-                    WHEN 'Float' THEN 'DOUBLE PRECISION'
-                    WHEN 'Boolean' THEN 'DOUBLE PRECISION'
-                    ELSE 'TEXT'
-                END
-            );
+            -- Check if the column already exists
+            SELECT EXISTS (
+                SELECT 1
+                FROM information_schema.columns
+                WHERE table_schema = 'sandbox'
+                AND table_name = split_part(pivot_table, '.', 2)
+                AND column_name = col_name
+            ) INTO col_exists;
 
-            RAISE NOTICE 'Column % added. Updating existing rows with NULLs.', r.code;
+            -- If not, add it
+            IF NOT col_exists THEN
+                RAISE NOTICE 'Adding column % to table %', col_name, pivot_table;
 
-            EXECUTE format(
-                'UPDATE %s SET %I = NULL WHERE %I IS NULL',
-                pivot_table, r.code, r.code
-            );
-        ELSE
-            RAISE NOTICE 'Column % already exists in table %', r.code, pivot_table;
-        END IF;
-    END LOOP;
+                EXECUTE format(
+                    'ALTER TABLE %s ADD COLUMN %I %s',
+                    pivot_table,
+                    col_name,
+                    CASE column_datatype
+                        WHEN 'Float' THEN 'DOUBLE PRECISION'
+                        WHEN 'Boolean' THEN 'DOUBLE PRECISION'
+                        ELSE 'TEXT'
+                    END
+                );
+            ELSE
+                RAISE NOTICE 'Column % already exists in table %', col_name, pivot_table;
+            END IF;
+        END LOOP;
+    END IF;
+
+    RAISE NOTICE 'Reordering columns in pivot table %...', pivot_table;
+    
+    -- Reorder all columns (timestamp first, then others alphabetically)
+    PERFORM sandbox.reorder_table_columns(pivot_table);
 
     RAISE NOTICE 'Completed initialize_columns_for_frequency for frequency: %', frequency;
 END;
 $$ LANGUAGE plpgsql;
-
 
 
 --------------------------------------------------------------
@@ -179,8 +233,11 @@ CREATE OR REPLACE FUNCTION sandbox.initialize_tmp_columns_for_frequency(frequenc
 RETURNS void AS $$
 DECLARE
     tmp_table TEXT;
-    r RECORD;
+    col_datatype TEXT;  -- Variable renombrada
     col_exists BOOLEAN;
+    column_list TEXT[];
+    current_column_name TEXT;  -- Variable renombrada
+    tmp_table_name TEXT;
 BEGIN
     RAISE NOTICE 'Initializing temporary columns for frequency: %', frequency;
 
@@ -195,36 +252,57 @@ BEGIN
         RAISE EXCEPTION 'Invalid frequency: %', frequency;
     END IF;
 
-    -- Add missing columns
-    FOR r IN
-        SELECT code, datatype FROM sandbox.ctrlx_signals
-        WHERE (frequency = '500mS' AND table_storage = '500mS')
-           OR (frequency = '1S' AND table_storage IN ('1S', '500mS'))
-           OR (frequency = '1M' AND table_storage IN ('1M', '1S', '500mS'))
-    LOOP
-        SELECT EXISTS (
-            SELECT 1 FROM information_schema.columns
-            WHERE table_schema = 'sandbox'
-            AND table_name = split_part(tmp_table, '.', 2)
-            AND column_name = r.code
-        ) INTO col_exists;
+    -- Get just the table name without schema
+    tmp_table_name := split_part(tmp_table, '.', 2);
 
-        IF NOT col_exists THEN
-            RAISE NOTICE 'Adding column % to %', r.code, tmp_table;
-            EXECUTE format('ALTER TABLE %s ADD COLUMN %I %s',
-                tmp_table,
-                r.code,
-                CASE r.datatype
-                    WHEN 'Float' THEN 'DOUBLE PRECISION'
-                    WHEN 'Boolean' THEN 'DOUBLE PRECISION'
-                    ELSE 'TEXT'
-                END
-            );
-        END IF;
-    END LOOP;
+    -- First collect all column names to add, sorted alphabetically
+    SELECT array_agg(code ORDER BY code)
+    INTO column_list
+    FROM sandbox.ctrlx_signals
+    WHERE (ctrlx_signals.frequency = '500mS' AND table_storage = '500mS')
+       OR (ctrlx_signals.frequency = '1S' AND table_storage IN ('1S', '500mS'))
+       OR (ctrlx_signals.frequency = '1M' AND table_storage IN ('1M', '1S', '500mS'));
 
+    -- Add columns in alphabetical order
+    IF column_list IS NOT NULL THEN
+        FOREACH current_column_name IN ARRAY column_list LOOP
+            -- Get the datatype for this column (qualified with table alias)
+            SELECT s.datatype INTO col_datatype
+            FROM sandbox.ctrlx_signals s
+            WHERE s.code = current_column_name 
+            LIMIT 1;
+            
+            -- Check if the column already exists (qualified column reference)
+            SELECT EXISTS (
+                SELECT 1 
+                FROM information_schema.columns cols
+                WHERE cols.table_schema = 'sandbox'
+                  AND cols.table_name = tmp_table_name
+                  AND cols.column_name = current_column_name
+            ) INTO col_exists;
+
+            IF NOT col_exists THEN
+                RAISE NOTICE 'Adding column % to %', current_column_name, tmp_table;
+                EXECUTE format('ALTER TABLE %s ADD COLUMN %I %s',
+                    tmp_table,
+                    current_column_name,
+                    CASE col_datatype
+                        WHEN 'Float' THEN 'DOUBLE PRECISION'
+                        WHEN 'Boolean' THEN 'DOUBLE PRECISION'
+                        ELSE 'TEXT'
+                    END
+                );
+            END IF;
+        END LOOP;
+    END IF;
+
+    RAISE NOTICE 'Reordering columns in temporary table %...', tmp_table;
+    
+    -- Reorder all columns (timestamp first, then others alphabetically)
+    PERFORM sandbox.reorder_table_columns(tmp_table);
 END;
 $$ LANGUAGE plpgsql;
+
 
 
 -----------------------------------------------------------------------
@@ -236,6 +314,7 @@ DECLARE
     tmp_table TEXT;
     signals TEXT;
     tmp_table_exists BOOLEAN;
+    column_list TEXT;
 BEGIN
     RAISE NOTICE 'Starting pivot_ctrlx_data with input frequency: %', frequency;
 
@@ -268,21 +347,26 @@ BEGIN
     END IF;
 
     RAISE NOTICE 'Truncating temporary table % before data aggregation.', tmp_table;
-
-    -- Truncate the temp table
     EXECUTE format('TRUNCATE TABLE %s', tmp_table);
 
     RAISE NOTICE 'Generating signal columns for aggregation.';
 
-    -- Build the aggregation expression dynamically
+    -- Build the aggregation expression dynamically with alphabetical order
+    -- Modified to include GROUP BY code
+    WITH signal_codes AS (
+        SELECT code
+        FROM sandbox.ctrlx_signals
+        WHERE (ctrlx_signals.frequency = '500mS' AND table_storage = '500mS')
+           OR (ctrlx_signals.frequency = '1S' AND table_storage IN ('1S', '500mS'))
+           OR (ctrlx_signals.frequency = '1M' AND table_storage IN ('1M', '1S', '500mS'))
+        GROUP BY code
+        ORDER BY code
+    )
     SELECT string_agg(
         format('MAX(value) FILTER (WHERE code = %L) AS %I', code, code), ', '
     )
     INTO signals
-    FROM sandbox.ctrlx_signals
-    WHERE (frequency = '500mS' AND table_storage = '500mS')
-       OR (frequency = '1S' AND table_storage IN ('1S', '500mS'))
-       OR (frequency = '1M' AND table_storage IN ('1M', '1S', '500mS'));
+    FROM signal_codes;
 
     IF signals IS NULL THEN
         RAISE NOTICE 'No signals defined for frequency %, skipping data insertion.', frequency;
@@ -303,8 +387,6 @@ BEGIN
     RAISE NOTICE 'Completed pivot_ctrlx_data for frequency: %', frequency;
 END;
 $$ LANGUAGE plpgsql;
-
-
 
 ------------------------------------------------------------------------
 -- Function to ensure that the pivot table has all the necessary columns from the source table
@@ -350,6 +432,7 @@ DECLARE
     pivot_table TEXT;
     tmp_table_exists BOOLEAN;
     row_count INTEGER;
+    column_list TEXT;
 BEGIN
     RAISE NOTICE 'Starting sync_ctrlx_pivot_table with frequency: %', frequency;
 
@@ -392,21 +475,38 @@ BEGIN
     -- Ensure the main pivot table has all columns present in the temporary table
     PERFORM sandbox.ensure_columns_exist(pivot_table, tmp_table);
 
-    RAISE NOTICE 'Inserting new data into pivot table %...', pivot_table;
-    -- Insert new data from the temporary table to the main pivot table, avoiding duplicates based on timestamp
+    -- Get ordered column list (timestamp first, then others alphabetically)
+    SELECT string_agg(quote_ident(column_name), ', ')
+    INTO column_list
+    FROM (
+        SELECT column_name
+        FROM information_schema.columns
+        WHERE table_schema = 'sandbox'
+        AND table_name = split_part(tmp_table, '.', 2)
+        ORDER BY CASE WHEN column_name = 'timestamp' THEN 0 ELSE 1 END,
+                 column_name
+    ) cols;
+
+    RAISE NOTICE 'Inserting new data into pivot table % with column order: %', pivot_table, column_list;
+    
+    -- Insert new data from the temporary table to the main pivot table with explicit column order
     EXECUTE format(
-        'INSERT INTO %s
-         SELECT *
+        'INSERT INTO %s (%s)
+         SELECT %s
          FROM %s t
          WHERE NOT EXISTS (
              SELECT 1 FROM %s p WHERE p.timestamp = t.timestamp
          )',
-        pivot_table, tmp_table, pivot_table
+        pivot_table, column_list, column_list, tmp_table, pivot_table
     );
+
+    -- Reorder columns in the pivot table to maintain consistency
+    PERFORM sandbox.reorder_table_columns(pivot_table);
 
     RAISE NOTICE 'sync_ctrlx_pivot_table for % completed successfully.', frequency;
 END;
 $$ LANGUAGE plpgsql;
+
 
 
 --Unique Variables 
@@ -414,8 +514,16 @@ $$ LANGUAGE plpgsql;
 CREATE OR REPLACE FUNCTION sandbox.refresh_ctrlx_signals()
 RETURNS void AS $$
 BEGIN
-    INSERT INTO sandbox.ctrlx_signals (code, browsename, ctrlx_name, site, is_run_status, datatype,table_storage)
-    SELECT DISTINCT code, browsename, ctrlx_name, site, is_run_status, datatype,table_storage
+    INSERT INTO sandbox.ctrlx_signals (
+        code, browsename, ctrlx_name, site, is_run_status, datatype, table_storage, frequency)
+    SELECT DISTINCT 
+        code, browsename, ctrlx_name, site, is_run_status, datatype, table_storage,
+        CASE 
+            WHEN table_storage = '500mS' THEN '500mS'
+            WHEN table_storage = '1S' THEN '1S'
+            WHEN table_storage = '1M' THEN '1M'
+            ELSE NULL
+        END
     FROM sandbox.ctrlx_data
     ON CONFLICT (code) DO UPDATE
         SET browsename = EXCLUDED.browsename,
@@ -423,10 +531,13 @@ BEGIN
             site = EXCLUDED.site,
             is_run_status = EXCLUDED.is_run_status,
             datatype = EXCLUDED.datatype,
-            table_storage = EXCLUDED.table_storage;
-    RAISE NOTICE 'Table Signales generated ...';       
+            table_storage = EXCLUDED.table_storage,
+            frequency = EXCLUDED.frequency;
+
+    RAISE NOTICE 'Table Signales updated including frequency...';       
 END;
 $$ LANGUAGE plpgsql;
+
 
 
 -- SELECT cron.schedule(
