@@ -312,22 +312,30 @@ RETURNS void AS $$
 DECLARE
     ts_expression TEXT;
     tmp_table TEXT;
+    pivot_table TEXT;
     signals TEXT;
     tmp_table_exists BOOLEAN;
+    pivot_table_exists BOOLEAN;
     column_list TEXT;
+    last_timestamp TIMESTAMP;
+    where_clause TEXT;
+    row_count INT;
 BEGIN
     RAISE NOTICE 'Starting pivot_ctrlx_data with input frequency: %', frequency;
 
-    -- Determine the timestamp expression and temporary table
+    -- Determine the timestamp expression and temporary/target table
     IF frequency = '500mS' THEN
         ts_expression := 'date_trunc(''second'', timestamp) + floor(extract(milliseconds from timestamp)::int / 500) * interval ''0.5 second''';
         tmp_table := 'sandbox.tmp_ctrlx_new_500ms';
+        pivot_table := 'sandbox.ctrlx_pivot_500ms';
     ELSIF frequency = '1S' THEN
         ts_expression := 'date_trunc(''second'', timestamp)';
         tmp_table := 'sandbox.tmp_ctrlx_new_1s';
+        pivot_table := 'sandbox.ctrlx_pivot_1s';
     ELSIF frequency = '1M' THEN
         ts_expression := 'date_trunc(''minute'', timestamp)';
         tmp_table := 'sandbox.tmp_ctrlx_new_1min';
+        pivot_table := 'sandbox.ctrlx_pivot_1min';
     ELSE
         RAISE EXCEPTION 'Invalid frequency: %', frequency;
     END IF;
@@ -346,13 +354,42 @@ BEGIN
         RETURN;
     END IF;
 
+    -- Check if the pivot table exists before selecting MAX(timestamp)
+    SELECT EXISTS (
+        SELECT FROM information_schema.tables
+        WHERE table_schema = 'sandbox'
+        AND table_name = split_part(pivot_table, '.', 2)
+    ) INTO pivot_table_exists;
+
+    IF pivot_table_exists THEN
+        EXECUTE format('SELECT MAX(timestamp) FROM %s', pivot_table) INTO last_timestamp;
+    ELSE
+        RAISE NOTICE 'Pivot table % does not exist. Assuming first run.', pivot_table;
+        last_timestamp := NULL;
+    END IF;
+
+    -- Determine the WHERE clause
+    IF last_timestamp IS NULL THEN
+        where_clause := '1=1';
+        RAISE NOTICE 'First run for frequency %, processing all historical data', frequency;
+    ELSE
+        where_clause := format('timestamp > %L', last_timestamp);
+        RAISE NOTICE 'Processing new data since % for frequency %', last_timestamp, frequency;
+    END IF;
+
+    -- Check if ctrlx_data has relevant data
+    EXECUTE format('SELECT COUNT(*) FROM sandbox.ctrlx_data WHERE %s', where_clause) INTO row_count;
+    IF row_count = 0 THEN
+        RAISE NOTICE 'No data available in ctrlx_data for frequency %, skipping pivoting step.', frequency;
+        RETURN;
+    END IF;
+
     RAISE NOTICE 'Truncating temporary table % before data aggregation.', tmp_table;
     EXECUTE format('TRUNCATE TABLE %s', tmp_table);
 
     RAISE NOTICE 'Generating signal columns for aggregation.';
 
     -- Build the aggregation expression dynamically with alphabetical order
-    -- Modified to include GROUP BY code
     WITH signal_codes AS (
         SELECT code
         FROM sandbox.ctrlx_signals
@@ -372,16 +409,15 @@ BEGIN
         RAISE NOTICE 'No signals defined for frequency %, skipping data insertion.', frequency;
         RETURN;
     END IF;
-    
+
     RAISE NOTICE 'Signal aggregation expression generated. Inserting data into %', tmp_table;
 
-    -- Insert pivoted data
     EXECUTE format(
         'INSERT INTO %s SELECT %s AS timestamp, %s
          FROM sandbox.ctrlx_data
-         WHERE timestamp > now() - interval ''5 minutes''
+         WHERE %s
          GROUP BY 1 ORDER BY 1',
-        tmp_table, ts_expression, signals
+        tmp_table, ts_expression, signals, where_clause
     );
 
     RAISE NOTICE 'Completed pivot_ctrlx_data for frequency: %', frequency;
