@@ -19,6 +19,15 @@ from ConnectionManager import ConnectionManager
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+ERROR_VALUES = {
+    'none': -9999.0,
+    'inf': -9998.0,
+    '-inf': -9997.0,
+    'nan': -9996.0,
+    'empty_string': -9995.0,
+    'invalid_string': -9994.0,
+    'invalid_type': -9993.0
+}
 config = utils.load_config()
 postgres_config = config.get("postgres", {})
 DB_WRITE_INTERVAL = postgres_config.get("write_interval", 1)  # Default value 1 second
@@ -80,29 +89,95 @@ def process_backup_files(conn):
                 logger.info(f"Successfully inserted backup data and deleted {backup_file}")
         except Exception as e:
             logger.error(f"Failed to process backup file {backup_file}: {e}")
-
+            
+def sanitize_value(value):
+    """
+    Normalizes and sanitizes the value, assigning specific error codes for each special case.
+    Always returns a valid float for database storage.
+    """
+    if value is None:
+        logger.debug("Detected None value, using error code")
+        return ERROR_VALUES['none']
+    
+    if isinstance(value, bool):
+        return float(value)
+    
+    if isinstance(value, int):
+        return float(value)
+    
+    if isinstance(value, float):
+        if value == float('inf'):
+            logger.debug("Detected positive infinity, using error code")
+            return ERROR_VALUES['inf']
+        if value == float('-inf'):
+            logger.debug("Detected negative infinity, using error code")
+            return ERROR_VALUES['-inf']
+        if value != value:  # NaN check
+            logger.debug("Detected NaN, using error code")
+            return ERROR_VALUES['nan']
+        return round(value, 6)
+    
+    if isinstance(value, str):
+        value = value.strip()
+        if not value:
+            logger.debug("Detected empty string, using error code")
+            return ERROR_VALUES['empty_string']
+        try:
+            num_value = float(value)
+            if num_value == float('inf'):
+                return ERROR_VALUES['inf']
+            if num_value == float('-inf'):
+                return ERROR_VALUES['-inf']
+            if num_value != num_value:
+                return ERROR_VALUES['nan']
+            return round(num_value, 6)
+        except (ValueError, TypeError):
+            logger.debug(f"Non-numeric string detected: '{value}', using error code")
+            return ERROR_VALUES['invalid_string']
+    
+    try:
+        str_value = str(value).strip()
+        if not str_value:
+            return ERROR_VALUES['empty_string']
+        return round(float(str_value), 6)
+    except (ValueError, TypeError, Exception):
+        return ERROR_VALUES['invalid_type']
+    
 def insert_data(conn, batch_data):
     if not isinstance(batch_data, list) or not all(validate_record(record) for record in batch_data):
         logger.error("Skipping insertion due to invalid data format.")
         return False
+
     query = """
-    INSERT INTO sandbox.ctrlx_data (NamespaceIndex, RouteName, BrowseName, Value, DataType, Timestamp, Code, CtrlX_Name, Site, is_run_status,table_storage)
-    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s,%s)
+    INSERT INTO sandbox.ctrlx_data (NamespaceIndex, RouteName, BrowseName, Value, DataType, Timestamp, Code, CtrlX_Name, Site, is_run_status, table_storage)
+    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
     """
+
     try:
         with conn.cursor() as cursor:
-            records = [(d["NamespaceIndex"],
-                        d["RouteName"],
-                        d["BrowseName"],
-                        float(d["Value"]) if isinstance(d["Value"], (bool, int)) else d["Value"],
-                        d["DataType"],
-                        d["Timestamp"],
-                        d["CtrlX_Name"]+"_"+generate_code(d["BrowseName"]),
-                        d["CtrlX_Name"],
-                        d["Site"],
-                        d["is_run_status"],
-                        d["table_storage"]
-                        ) for d in batch_data]
+            records = []
+            for d in batch_data:
+                original_value = d["Value"]
+                sanitized_value = sanitize_value(original_value)
+
+                if (isinstance(original_value, (float, str)) and 
+                    sanitized_value in ERROR_VALUES.values()):
+                    logger.info(f"Converted value: {original_value} -> {sanitized_value}")
+
+                records.append((
+                    d["NamespaceIndex"],
+                    d["RouteName"],
+                    d["BrowseName"],
+                    sanitized_value,
+                    d["DataType"],
+                    d["Timestamp"],
+                    d["CtrlX_Name"] + "_" + generate_code(d["BrowseName"]),
+                    d["CtrlX_Name"],
+                    d["Site"],
+                    d["is_run_status"],
+                    d["table_storage"]
+                ))
+
             cursor.executemany(query, records)
             conn.commit()
             logger.info(f"Inserted {len(records)} records into PostgreSQL.")

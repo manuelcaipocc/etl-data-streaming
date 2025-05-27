@@ -1,7 +1,12 @@
 # Ignorar cualquier carpeta llamada logs, en cualquier ubicación
 **/logs/
 **/history/
+**/.nux/
+**/.telemetry/
+**/schedules/
 read_packages_key.text
+full_stack.tar
+full_stack.zip
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

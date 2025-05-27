@@ -53,6 +53,8 @@ etl/
 │    │    └── main.py
 │    ├── poetry.lock
 │    └── pyproject.toml
+├── full_stack.tar
+├── full_stack.zip
 ├── grafana_querys/
 │    └── graph.sql
 ├── loadbosch/
@@ -69,7 +71,6 @@ etl/
 │    ├── init.sql
 │    ├── pivot-test.sql
 │    ├── register_cron_jobs.sql
-│    ├── update_pivot_functions.sql/
 │    └── update_schema.sql
 ├── solacebosch/
 │    └── solace_start.sh

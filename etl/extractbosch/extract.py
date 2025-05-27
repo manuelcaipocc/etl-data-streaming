@@ -63,6 +63,7 @@ def extract_sensor_data(opcua_client, solace_publisher, node, ctrlx_name, site):
     variation_threshold = node.get("variation_threshold", 0.05)
     is_run_status = node.get("is_run_status", False)
     table_destiny = node.get("table_storage","1M")
+    publish_all_data = node.get("publish_all_data", False)
     
     node_id = f"ns={namespace_index};s={route_name}"
     last_values[node_id] = None
@@ -83,6 +84,9 @@ def extract_sensor_data(opcua_client, solace_publisher, node, ctrlx_name, site):
             if initial_publishes[node_id] < 10:
                 should_publish = True
                 initial_publishes[node_id] += 1
+                last_publish_time = now
+            elif publish_all_data:  # Si publish_all_data es True, publicar siempre
+                should_publish = True
                 last_publish_time = now
             else:
                 last_value = last_values[node_id]
@@ -144,7 +148,7 @@ def extract_data():
         logger.error("Error inicializando publicador de Solace. Terminando ejecución.")
         return
 
-    with ThreadPoolExecutor(max_workers=10) as executor:
+    with ThreadPoolExecutor(max_workers=30) as executor:
         for ctrlx in global_config["opcua"]["controllers"]:
             ctrlx_name = ctrlx["name"]
             site = ctrlx.get("site", "Unknown")

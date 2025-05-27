@@ -399,9 +399,16 @@ BEGIN
         GROUP BY code
         ORDER BY code
     )
+
+    -- SELECT string_agg(
+    --     format('MAX(value) FILTER (WHERE code = %L) AS %I', code, code), ', '
+    -- )
     SELECT string_agg(
-        format('MAX(value) FILTER (WHERE code = %L) AS %I', code, code), ', '
+    format('AVG(value) FILTER (WHERE code = %L) AS %I', code, code), ', '
     )
+
+
+
     INTO signals
     FROM signal_codes;
 

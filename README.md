@@ -15,7 +15,10 @@ This application allows extracting data from any **CtrlX (Bosch Rexroth)** to a 
     - 5.4 [PostgreSQL Configuration](#54-postgresql-configuration)
 6. [Testing OPC UA Connection](#6-testing-opc-ua-connection)
 7. [Repository](#7-repository)
-8. [Contact Information](#8-contact-information)
+8. [Repository](#7-repository)
+9. [Repository](#7-repository)
+10. [Repository](#7-repository)
+11. [Contact Information](#8-contact-information)
 
 ## 1. Project Structure
 
@@ -211,7 +214,72 @@ The source code for this project is available in the following Bitbucket reposit
     <a href="#table-of-contents">⬆ Back to Table of Contents</a>
 </p>
 
-## 8. Contact Information
+
+## 8. Dagster Monitoring and PostgreSQL Pivoting
+
+### Dagster Monitoring
+
+Dagster automatically monitors the system's critical connections:
+
+- **PostgreSQL**: Verifies availability and disconnects after validation.
+- **Solace**: Establishes and terminates a publishing channel to validate connectivity.
+- **OPC UA**: Iterates over multiple CtrlX controllers and checks if the OPC UA client can connect.
+
+Main job:
+
+```python
+@job(resource_defs={"cm": connection_manager_resource})
+def monitor_all_connections():
+    monitor_postgres_op()
+    monitor_solace_op()
+    monitor_opcua_op()
+```
+
+This job runs periodically according to the `connections_schedule` defined in Dagster and restarts the `etl-extract` container if a failure is detected.
+
+---
+
+## 9 PostgreSQL Pivoting
+
+PostgreSQL uses the **pg_cron** extension to run functions automatically at regular intervals (e.g., every 5 minutes).
+
+Each scheduled task performs the following logic per frequency (`500mS`, `1S`, `1M`):
+
+#### 10.1 **Refresh unique signals**:
+```sql
+SELECT sandbox.refresh_ctrlx_signals();
+```
+
+#### 10.2 **Initialize new columns in pivot and temporary tables**:
+```sql
+SELECT sandbox.initialize_columns_for_frequency('1S');
+SELECT sandbox.initialize_tmp_columns_for_frequency('1S');
+```
+
+#### 10.3 **Pivot from `ctrlx_data` into temporary table**:
+```sql
+SELECT sandbox.pivot_ctrlx_data('1S');
+```
+
+#### 10.4 **Sync to final pivot table**:
+```sql
+SELECT sandbox.sync_ctrlx_pivot_table('1S');
+```
+
+####  `pg_cron` schedule:
+```sql
+SELECT cron.schedule(
+  'pivot_1S',
+  '*/5 * * * *',
+  $$
+  SELECT sandbox.initialize_columns_for_frequency('1S');
+  SELECT sandbox.pivot_ctrlx_data('1S');
+  SELECT sandbox.sync_ctrlx_pivot_table('1S');
+  $$
+);
+```
+
+## 11. Contact Information
 
 For any inquiries regarding the project, please contact the main users:
 
@@ -224,3 +292,4 @@ For any inquiries regarding the project, please contact the main users:
 <p style="font-size: 12px; opacity: 0.5; text-align: left;">
     <a href="#table-of-contents">⬆ Back to Table of Contents</a>
 </p>
+
