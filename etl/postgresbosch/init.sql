@@ -51,6 +51,9 @@ BEGIN
 
         CREATE TABLE IF NOT EXISTS sandbox.ctrlx_pivot_1min (
             timestamp TIMESTAMP PRIMARY KEY);
+        
+        CREATE TABLE IF NOT EXISTS sandbox.ctrlx_pivot_100ms (
+            timestamp TIMESTAMP PRIMARY KEY);
 
         -- Temporal tables (sin 'id', solo para pivoting)
         CREATE TABLE IF NOT EXISTS sandbox.tmp_ctrlx_new_500ms (
@@ -64,6 +67,9 @@ BEGIN
         CREATE TABLE IF NOT EXISTS sandbox.tmp_ctrlx_new_1min (
             timestamp TIMESTAMP NOT NULL
         );
+
+        CREATE TABLE IF NOT EXISTS sandbox.tmp_ctrlx_new_100ms (
+            timestamp TIMESTAMP NOT NULL);
 
 
         -- Create the signals table        --signals
@@ -146,7 +152,9 @@ BEGIN
     RAISE NOTICE 'Starting initialize_columns_for_frequency with input: %', frequency;
 
     -- Determine the pivot table
-    IF frequency = '500mS' THEN
+    IF frequency = '100mS' THEN
+        pivot_table := 'sandbox.ctrlx_pivot_100ms';
+    ELSIF frequency = '500mS' THEN
         pivot_table := 'sandbox.ctrlx_pivot_500ms';
     ELSIF frequency = '1S' THEN
         pivot_table := 'sandbox.ctrlx_pivot_1s';
@@ -175,10 +183,12 @@ BEGIN
     -- First collect all column names to add, sorted alphabetically
     SELECT array_agg(code ORDER BY code)
     INTO column_list
-    FROM sandbox.ctrlx_signals
-    WHERE (ctrlx_signals.frequency = '500mS' AND table_storage = '500mS')
-    OR (ctrlx_signals.frequency = '1S' AND table_storage IN ('1S', '500mS'))
-    OR (ctrlx_signals.frequency = '1M' AND table_storage IN ('1M', '1S', '500mS'));
+    FROM sandbox.ctrlx_signals cs
+    WHERE
+    (cs.frequency = '100mS' AND cs.table_storage = '100mS') OR
+    (cs.frequency = '500mS' AND cs.table_storage IN ('100mS', '500mS')) OR
+    (cs.frequency = '1S' AND cs.table_storage IN ('100mS', '500mS', '1S')) OR
+    (cs.frequency = '1M' AND cs.table_storage IN ('100mS', '500mS', '1S', '1M'));
 
     -- Add columns in alphabetical order
     IF column_list IS NOT NULL THEN
@@ -242,7 +252,9 @@ BEGIN
     RAISE NOTICE 'Initializing temporary columns for frequency: %', frequency;
 
     -- Define the correct tmp table
-    IF frequency = '500mS' THEN
+    IF frequency = '100mS' THEN
+        tmp_table := 'sandbox.tmp_ctrlx_new_100ms';
+    ELSIF frequency = '500mS' THEN
         tmp_table := 'sandbox.tmp_ctrlx_new_500ms';
     ELSIF frequency = '1S' THEN
         tmp_table := 'sandbox.tmp_ctrlx_new_1s';
@@ -258,10 +270,12 @@ BEGIN
     -- First collect all column names to add, sorted alphabetically
     SELECT array_agg(code ORDER BY code)
     INTO column_list
-    FROM sandbox.ctrlx_signals
-    WHERE (ctrlx_signals.frequency = '500mS' AND table_storage = '500mS')
-       OR (ctrlx_signals.frequency = '1S' AND table_storage IN ('1S', '500mS'))
-       OR (ctrlx_signals.frequency = '1M' AND table_storage IN ('1M', '1S', '500mS'));
+    FROM sandbox.ctrlx_signals cs
+    WHERE 
+        (cs.frequency = '100mS' AND cs.table_storage = '100mS') OR
+        (cs.frequency = '500mS' AND cs.table_storage IN ('100mS', '500mS')) OR
+        (cs.frequency = '1S' AND cs.table_storage IN ('100mS', '500mS', '1S')) OR
+        (cs.frequency = '1M' AND cs.table_storage IN ('100mS', '500mS', '1S', '1M'));
 
     -- Add columns in alphabetical order
     IF column_list IS NOT NULL THEN
@@ -324,7 +338,11 @@ BEGIN
     RAISE NOTICE 'Starting pivot_ctrlx_data with input frequency: %', frequency;
 
     -- Determine the timestamp expression and temporary/target table
-    IF frequency = '500mS' THEN
+    IF frequency = '100mS' THEN
+        ts_expression := 'date_trunc(''second'', timestamp) + floor(extract(milliseconds from timestamp)::int / 100) * interval ''0.1 second''';
+        tmp_table := 'sandbox.tmp_ctrlx_new_100ms';
+        pivot_table := 'sandbox.ctrlx_pivot_100ms';
+    ELSIF frequency = '500mS' THEN
         ts_expression := 'date_trunc(''second'', timestamp) + floor(extract(milliseconds from timestamp)::int / 500) * interval ''0.5 second''';
         tmp_table := 'sandbox.tmp_ctrlx_new_500ms';
         pivot_table := 'sandbox.ctrlx_pivot_500ms';
@@ -391,13 +409,14 @@ BEGIN
 
     -- Build the aggregation expression dynamically with alphabetical order
     WITH signal_codes AS (
-        SELECT code
-        FROM sandbox.ctrlx_signals
-        WHERE (ctrlx_signals.frequency = '500mS' AND table_storage = '500mS')
-           OR (ctrlx_signals.frequency = '1S' AND table_storage IN ('1S', '500mS'))
-           OR (ctrlx_signals.frequency = '1M' AND table_storage IN ('1M', '1S', '500mS'))
-        GROUP BY code
-        ORDER BY code
+    SELECT code
+    FROM sandbox.ctrlx_signals cs
+    WHERE (cs.frequency = '100mS' AND cs.table_storage = '100mS')
+    OR (cs.frequency = '500mS' AND cs.table_storage IN ('100mS', '500mS'))
+    OR (cs.frequency = '1S' AND cs.table_storage IN ('100mS', '500mS', '1S'))
+    OR (cs.frequency = '1M' AND cs.table_storage IN ('100mS', '500mS', '1S', '1M'))
+    GROUP BY code
+    ORDER BY code
     )
 
     -- SELECT string_agg(
@@ -479,7 +498,10 @@ DECLARE
 BEGIN
     RAISE NOTICE 'Starting sync_ctrlx_pivot_table with frequency: %', frequency;
 
-    IF frequency = '500mS' THEN
+    IF frequency = '100mS' THEN
+        tmp_table := 'sandbox.tmp_ctrlx_new_100ms';
+        pivot_table := 'sandbox.ctrlx_pivot_100ms';
+    ELSIF frequency = '500mS' THEN
         tmp_table := 'sandbox.tmp_ctrlx_new_500ms';
         pivot_table := 'sandbox.ctrlx_pivot_500ms';
     ELSIF frequency = '1S' THEN
@@ -561,7 +583,8 @@ BEGIN
         code, browsename, ctrlx_name, site, is_run_status, datatype, table_storage, frequency)
     SELECT DISTINCT 
         code, browsename, ctrlx_name, site, is_run_status, datatype, table_storage,
-        CASE 
+        CASE
+            WHEN table_storage = '100mS' THEN '100mS'
             WHEN table_storage = '500mS' THEN '500mS'
             WHEN table_storage = '1S' THEN '1S'
             WHEN table_storage = '1M' THEN '1M'
@@ -589,11 +612,20 @@ $$ LANGUAGE plpgsql;
 --     $$ SELECT sandbox.refresh_ctrlx_signals(); $$
 -- );
 
-
+-- SELECT cron.schedule(
+--     'pivot_100ms', '*/5 * * * *',
+--     $$ 
+--     SELECT sandbox.initialize_columns_for_frequency('100mS');
+--     SELECT sandbox.initialize_tmp_columns_for_frequency('100mS');
+--     SELECT sandbox.pivot_ctrlx_data('100mS');
+--     SELECT sandbox.sync_ctrlx_pivot_table('100mS');
+--     $$
+-- );
 -- SELECT cron.schedule(
 --     'pivot_500ms', '*/5 * * * *',
 --     $$ 
 --     SELECT sandbox.initialize_columns_for_frequency('500mS');
+--     SELECT sandbox.initialize_tmp_columns_for_frequency('500mS');
 --     SELECT sandbox.pivot_ctrlx_data('500mS');
 --     SELECT sandbox.sync_ctrlx_pivot_table('500mS');
 --     $$
@@ -603,6 +635,7 @@ $$ LANGUAGE plpgsql;
 --     'pivot_1S', '*/5 * * * *',
 --     $$ 
 --     SELECT sandbox.initialize_columns_for_frequency('1S');
+--     SELECT sandbox.initialize_tmp_columns_for_frequency('1S');
 --     SELECT sandbox.pivot_ctrlx_data('1S');
 --     SELECT sandbox.sync_ctrlx_pivot_table('1S');
 --     $$
@@ -612,6 +645,7 @@ $$ LANGUAGE plpgsql;
 --     'pivot_1M', '*/5 * * * *',
 --     $$ 
 --     SELECT sandbox.initialize_columns_for_frequency('1M');
+--     SELECT sandbox.initialize_tmp_columns_for_frequency('1M');
 --     SELECT sandbox.pivot_ctrlx_data('1M');
 --     SELECT sandbox.sync_ctrlx_pivot_table('1M');
 --     $$
