@@ -62,7 +62,7 @@ opcua:
           RouteName: "plc/app/Application/sym/GVL_HMI/P_s"
           BrowseName: "P_s"
           Level: 8
-          update_interval: 1000               #how fast should we ask OPCUA
+          update_interval: 500               #how fast should we ask OPCUA
           variation_threshold: 0.01  # 5% of variation
           is_run_status: False
           table_storage: 1S
@@ -74,7 +74,7 @@ opcua:
           RouteName: "plc/app/Application/sym/GVL_HMI/P_a"
           BrowseName: "P_a"
           Level: 8
-          update_interval: 1000
+          update_interval: 500
           variation_threshold: 0.01  # 5% of variation
           is_run_status: False
           table_storage: 1S
@@ -87,7 +87,7 @@ opcua:
           RouteName: "plc/app/Application/sym/GVL_HMI/P_b"
           BrowseName: "P_b"
           Level: 8
-          update_interval: 1000
+          update_interval: 500
           variation_threshold: 0.01  # 5% of variation
           is_run_status: False
           table_storage: 1S
@@ -126,7 +126,7 @@ opcua:
           RouteName: "plc/app/Application/sym/GVL_HMI/ACT_Vel"
           BrowseName: "ACT_Vel"
           Level: 8
-          update_interval: 500      # miliseconds 
+          update_interval: 100      # miliseconds 
           variation_threshold: 0.01  # 5% of variation
           is_run_status: False
           table_storage: 500mS
@@ -153,10 +153,11 @@ opcua:
           RouteName: "plc/app/Application/sym/GVL_HMI/Eff_mech"
           BrowseName: "Eff_mech"
           Level: 8
-          update_interval: 1000      # miliseconds 
+          update_interval: 100      # miliseconds 
           variation_threshold: 0.01  # 5% of variation
           is_run_status: False
-          table_storage: 1S
+          table_storage: 500mS
+          publish_all_data: True
           #important only while simulating ctrlX
           simulation_value: 300                
           variation_simulation: 0.1
@@ -232,7 +233,7 @@ opcua:
           RouteName: "plc/app/Application/sym/GVL_HMI/bHMI_Status_DigiOut_XG1_OutA_gb"
           BrowseName: "Y1"
           Level: 8
-          update_interval: 500      # miliseconds 
+          update_interval: 100      # miliseconds 
           variation_threshold: 0.05  # 5% of variation
           is_run_status: True
           table_storage: 500mS
@@ -245,7 +246,7 @@ opcua:
           RouteName: "plc/app/Application/sym/GVL_HMI/bHMI_Steuern_DigiOut_XG1_OutA_gb"
           BrowseName: "Y1_S"
           Level: 8
-          update_interval: 500      # miliseconds 
+          update_interval: 100      # miliseconds 
           variation_threshold: 0.05  # 5% of variation
           is_run_status: True
           table_storage: 500mS
@@ -258,7 +259,7 @@ opcua:
           RouteName: "plc/app/Application/sym/GVL_HMI/bHMI_Status_DigiOut_XG1_OutB_gb"
           BrowseName: "Y2"
           Level: 8
-          update_interval: 500      # miliseconds 
+          update_interval: 100      # miliseconds 
           variation_threshold: 0.05  # 5% of variation
           is_run_status: True
           table_storage: 500mS
@@ -271,7 +272,7 @@ opcua:
           RouteName: "plc/app/Application/sym/GVL_HMI/bHMI_Steuern_DigiOut_XG1_OutB_gb"
           BrowseName: "Y2_S"
           Level: 8
-          update_interval: 500      # miliseconds 
+          update_interval: 100      # miliseconds 
           variation_threshold: 0.05  # 5% of variation
           is_run_status: True
           table_storage: 500mS
@@ -284,7 +285,7 @@ opcua:
           RouteName: "plc/app/Application/sym/GVL_HMI/bHMI_Status_DigiOut_XG2_OutA_gb"
           BrowseName: "Y3"
           Level: 8
-          update_interval: 500      # miliseconds 
+          update_interval: 100      # miliseconds 
           variation_threshold: 0.05  # 5% of variation
           is_run_status: True
           table_storage: 500mS
@@ -297,7 +298,7 @@ opcua:
           RouteName: "plc/app/Application/sym/GVL_HMI/bHMI_Steuern_DigiOut_XG2_OutA_gb"
           BrowseName: "Y3_S"
           Level: 8
-          update_interval: 500      # miliseconds 
+          update_interval: 100      # miliseconds 
           variation_threshold: 0.05  # 5% of variation
           is_run_status: True
           table_storage: 500mS
