@@ -15,10 +15,9 @@ This application allows extracting data from any **CtrlX (Bosch Rexroth)** to a 
     - 5.4 [PostgreSQL Configuration](#54-postgresql-configuration)
 6. [Testing OPC UA Connection](#6-testing-opc-ua-connection)
 7. [Repository](#7-repository)
-8. [Repository](#7-repository)
-9. [Repository](#7-repository)
-10. [Repository](#7-repository)
-11. [Contact Information](#8-contact-information)
+8. [Dagster Monitoring and PostgreSQL Pivoting](#8-Dagster-Monitoring-and-PostgreSQL-Pivoting)
+9. [PostgreSQL Pivoting](#9-PostgreSQL-Pivoting)
+10. [Contact Information](#10-contact-information)
 
 ## 1. Project Structure
 
@@ -245,23 +244,23 @@ PostgreSQL uses the **pg_cron** extension to run functions automatically at regu
 
 Each scheduled task performs the following logic per frequency (`500mS`, `1S`, `1M`):
 
-#### 10.1 **Refresh unique signals**:
+#### 9.1 **Refresh unique signals**:
 ```sql
 SELECT sandbox.refresh_ctrlx_signals();
 ```
 
-#### 10.2 **Initialize new columns in pivot and temporary tables**:
+#### 9.2 **Initialize new columns in pivot and temporary tables**:
 ```sql
 SELECT sandbox.initialize_columns_for_frequency('1S');
 SELECT sandbox.initialize_tmp_columns_for_frequency('1S');
 ```
 
-#### 10.3 **Pivot from `ctrlx_data` into temporary table**:
+#### 9.3 **Pivot from `ctrlx_data` into temporary table**:
 ```sql
 SELECT sandbox.pivot_ctrlx_data('1S');
 ```
 
-#### 10.4 **Sync to final pivot table**:
+#### 9.4 **Sync to final pivot table**:
 ```sql
 SELECT sandbox.sync_ctrlx_pivot_table('1S');
 ```
@@ -279,13 +278,13 @@ SELECT cron.schedule(
 );
 ```
 
-## 11. Contact Information
+## 10. Contact Information
 
 For any inquiries regarding the project, please contact the main users:
 
 | **Main User** | **Responsibilities** |
 |--------------|----------------------|
-| **Caipo Manuel (DC/SSD3)**          | Working Student/Developer |
+| **Caipo Manuel (DC/SSD3)**          | Working Student / Developer |
 | **Guedria Mohamed Amine (DC/SSD6)** | Trainer / SW Engineer |
 
 
