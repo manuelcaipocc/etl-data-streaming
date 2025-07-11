@@ -4,20 +4,58 @@ This application allows extracting data from any **CtrlX (Bosch Rexroth)** to a 
 
 ## Table of Contents
 
-1. [Project Structure](#1-project-structure)
-2. [Prerequisites](#2-prerequisites)
-3. [Execution](#3-execution)
-4. [User and Password Verification](#4-user-and-password-verification)
-5. [Configuration File (config.yaml)](#5-configuration-file-configyaml)
-    - 5.1 [OPC UA Configuration](#51-opc-ua-configuration)
-    - 5.2 [Nodes Configuration](#52-nodes-configuration)
-    - 5.3 [Solace Configuration](#53-solace-configuration)
-    - 5.4 [PostgreSQL Configuration](#54-postgresql-configuration)
-6. [Testing OPC UA Connection](#6-testing-opc-ua-connection)
-7. [Repository](#7-repository)
-8. [Dagster Monitoring and PostgreSQL Pivoting](#8-Dagster-Monitoring-and-PostgreSQL-Pivoting)
-9. [PostgreSQL Pivoting](#9-PostgreSQL-Pivoting)
-10. [Contact Information](#10-contact-information)
+0. [Quick Start](#0-quick-start)  
+1. [Project Structure](#1-project-structure)  
+2. [Prerequisites](#2-prerequisites)  
+3. [Execution](#3-execution)  
+4. [User and Password Verification](#4-user-and-password-verification)  
+5. [Configuration File (config.yaml)](#5-configuration-file-configyaml)  
+   - 5.1 [OPC UA Configuration](#51-opc-ua-configuration)  
+   - 5.2 [Nodes Configuration](#52-nodes-configuration)  
+   - 5.3 [Solace Configuration](#53-solace-configuration)  
+   - 5.4 [PostgreSQL Configuration](#54-postgresql-configuration)  
+6. [Testing OPC UA Connection](#6-testing-opc-ua-connection)  
+7. [Repository](#7-repository)  
+8. [Dagster Monitoring and PostgreSQL Pivoting](#8-dagster-monitoring-and-postgresql-pivoting)  
+9. [PostgreSQL Pivoting](#9-postgresql-pivoting)  
+10. [Contact Information](#10-contact-information)  
+
+---
+
+## 0. Quick Start
+
+After step 3 (Execution), you can connect to the database by executing the following command (assuming Docker is in the system PATH):
+
+```bash
+docker exec -it postgres-db psql -U boschrexroth -d automax
+```
+
+Once connected, you can run queries such as:
+
+```sql
+SELECT * FROM sandbox.ctrlx_signals;
+SELECT * FROM sandbox.ctrlx_pivot_100ms ORDER BY timestamp DESC LIMIT 10;
+\dt sandbox.*;
+```
+
+To connect via Python or other services, use the following credentials:
+
+```yaml
+postgres:
+  host: localhost
+  port: 5432
+  user: boschrexroth
+  password: boschrexroth
+  db: automax
+  schema: sandbox
+  table: ctrlx_data
+```
+
+Optionally, use the `ConnectionManager.py` class to handle the connection.
+
+---
+
+
 
 ## 1. Project Structure
 
@@ -130,22 +168,37 @@ opcua:
 - **timeout/update_interval/retries/retry_delay**: Network and reconnection settings.
 
 ### 5.2 **Nodes Configuration**
+
 ```yaml
-  nodes:
-    - NodeId: "ns=2;s=plc/app/Application/sym/GVL_HMI/P_s"
-      NamespaceIndex: 2
-      RouteName: "plc/app/Application/sym/GVL_HMI/P_s"
-      BrowseName: "P_s"
-      Level: 8
-      update_interval: 100
+nodes:
+  - NodeId: "ns=2;s=plc/app/Application/sym/GVL_HMI/P_s"
+    NamespaceIndex: 2
+    RouteName: "plc/app/Application/sym/GVL_HMI/P_s"
+    BrowseName: "P_s"
+    Level: 8
+    update_interval: 50               # How frequently to request updates from OPC UA (in milliseconds)
+    variation_threshold: 0.01         # Threshold for detecting significant variation (1%)
+    is_run_status: False              # Whether this variable represents a boolean run status
+    table_storage: 100mS              # Determines the target table after pivoting (e.g., 100mS, 1S, 1M)
+    publish_all_data: True            # If True, all data is published to Solace topic; otherwise, only changed values
+    simulation_value: 100             # Default value when running in simulation mode
+    variation_simulation: 0.06        # Simulated variation percentage (e.g., 6%)
 ```
-#### Explanation:
-- **NodeId**: Unique identifier for the OPC UA node.
-- **NamespaceIndex**: Defines the namespace.
-- **RouteName**: Path of the node in the PLC.
-- **BrowseName**: Human-readable name.
-- **Level**: Defines its hierarchy level.
-- **update_interval**: Frequency of updates (in milliseconds).
+#### Explanation
+
+- **NodeId**: Unique identifier for the OPC UA node, including its namespace and path.
+- **NamespaceIndex**: Index used to define the namespace in the OPC UA server.
+- **RouteName**: Full internal path of the node in the PLC.
+- **BrowseName**: Human-readable short name for the variable.
+- **Level**: Depth or hierarchy level within the PLC structure.
+- **update_interval**: How often the system should request an update from the OPC UA server (in milliseconds).
+- **variation_threshold**: Minimum change required to consider the value as updated (e.g., 0.01 = 1%).
+- **is_run_status**: Boolean flag indicating whether this node is a status signal (e.g., start/stop).
+- **table_storage**: Frequency bucket for pivoting data (e.g., `100mS`, `1S`, `1M`), used to route values to the correct table.
+- **publish_all_data**: If set to `True`, publishes every value received; otherwise, only publishes values that vary.
+- **simulation_value**: Default static value for simulation purposes (e.g., if CtrlX is not connected).
+- **variation_simulation**: Simulated variation range (e.g., 0.06 = ±6%) used when generating synthetic data.
+
 
 ### 5.3 **Solace Configuration**
 ```yaml

@@ -62,11 +62,12 @@ opcua:
           RouteName: "plc/app/Application/sym/GVL_HMI/P_s"
           BrowseName: "P_s"
           Level: 8
-          update_interval: 500               #how fast should we ask OPCUA
+          update_interval: 50             #how fast should we ask OPCUA
           variation_threshold: 0.01  # 5% of variation
-          is_run_status: False
-          table_storage: 1S
-          simulation_value: 100                # use with simulated 
+          is_run_status: False        # is a boolean variable
+          table_storage: 100mS        # wich end table the data will be standing after pivoting
+          publish_all_data: True        # publicar todo en el topico de solace o optimizar a variables cambiantes
+          simulation_value: 100                # use with simulated ctrlX
           variation_simulation: 0.06           # 6 % of variation with simulated ctrlX
 
         - NodeId: "ns=2;s=plc/app/Application/sym/GVL_HMI/P_a"
@@ -74,10 +75,11 @@ opcua:
           RouteName: "plc/app/Application/sym/GVL_HMI/P_a"
           BrowseName: "P_a"
           Level: 8
-          update_interval: 500
+          update_interval: 50
           variation_threshold: 0.01  # 5% of variation
           is_run_status: False
-          table_storage: 1S
+          table_storage: 100mS
+          publish_all_data: True
           #important only while simulating ctrlX
           simulation_value: 100                
           variation_simulation: 0.06           
@@ -87,10 +89,11 @@ opcua:
           RouteName: "plc/app/Application/sym/GVL_HMI/P_b"
           BrowseName: "P_b"
           Level: 8
-          update_interval: 500
+          update_interval: 50
           variation_threshold: 0.01  # 5% of variation
           is_run_status: False
-          table_storage: 1S
+          table_storage: 100mS
+          publish_all_data: True
           #important only while simulating ctrlX
           simulation_value: 200                
           variation_simulation: 0.1
@@ -100,7 +103,7 @@ opcua:
           RouteName: "plc/app/Application/sym/GVL_HMI/V"
           BrowseName: "V"
           Level: 8
-          update_interval: 1000      # miliseconds 
+          update_interval: 500      # miliseconds 
           variation_threshold: 0.01  # 5% of variation
           is_run_status: False
           table_storage: 1S
@@ -117,6 +120,7 @@ opcua:
           variation_threshold: 0.01  # 5% of variation
           is_run_status: False
           table_storage: 100mS
+          publish_all_data: True
           #important only while simulating ctrlX
           simulation_value: 300                
           variation_simulation: 0.1
@@ -140,7 +144,7 @@ opcua:
           RouteName: "plc/app/Application/sym/GVL_HMI/Eff_hyd"
           BrowseName: "Eff_hyd"
           Level: 8
-          update_interval: 1000      # miliseconds 
+          update_interval: 500      # miliseconds 
           variation_threshold: 0.05  # 5% of variation
           is_run_status: False
           table_storage: 1S
@@ -153,11 +157,11 @@ opcua:
           RouteName: "plc/app/Application/sym/GVL_HMI/Eff_mech"
           BrowseName: "Eff_mech"
           Level: 8
-          update_interval: 50      # miliseconds 
+          update_interval: 500      # miliseconds 
           variation_threshold: 0.01  # 5% of variation
           is_run_status: False
-          table_storage: 100mS
-          publish_all_data: True
+          table_storage: 1S
+          publish_all_data: False
           #important only while simulating ctrlX
           simulation_value: 300                
           variation_simulation: 0.1
@@ -167,7 +171,7 @@ opcua:
           RouteName: "plc/app/Application/sym/GVL_HMI/Eff_syst"
           BrowseName: "Eff_syst"
           Level: 8
-          update_interval: 1000      # miliseconds 
+          update_interval: 500      # miliseconds 
           variation_threshold: 0.01  # 5% of variation
           is_run_status: False
           table_storage: 1S
@@ -180,10 +184,11 @@ opcua:
           RouteName: "plc/app/Application/sym/GVL_HMI/P_mech"
           BrowseName: "P_mech"
           Level: 8
-          update_interval: 1000      # miliseconds 
+          update_interval: 50      # miliseconds 
           variation_threshold: 0.01  # 5% of variation
           is_run_status: False
-          table_storage: 1S
+          table_storage: 100mS
+          publish_all_data: True
           #important only while simulating ctrlX
           simulation_value: 300                
           variation_simulation: 0.1
@@ -193,10 +198,11 @@ opcua:
           RouteName: "plc/app/Application/sym/GVL_HMI/Q"
           BrowseName: "Q"
           Level: 8
-          update_interval: 1000      # miliseconds 
+          update_interval: 50      # miliseconds 
           variation_threshold: 0.01  # 5% of variation
           is_run_status: False
-          table_storage: 1S
+          table_storage: 100mS
+          is_run_status: True
           #important only while simulating ctrlX
           simulation_value: 300                
           variation_simulation: 0.1
@@ -207,7 +213,7 @@ opcua:
           RouteName: "plc/app/Application/sym/GLV_IO/rEnergiemonitoring_I1_i"
           BrowseName: "1_Energ"
           Level: 8
-          update_interval: 1000      # miliseconds 
+          update_interval: 500      # miliseconds 
           variation_threshold: 0.05  # 5% of variation
           is_run_status: False
           table_storage: 1S
@@ -220,7 +226,7 @@ opcua:
           RouteName: "plc/app/Application/sym/GLV_IO/rEnergiemonitoring_U1_i"
           BrowseName: "2_Energ"
           Level: 8
-          update_interval: 1000      # miliseconds 
+          update_interval: 500      # miliseconds 
           variation_threshold: 0.05  # 5% of variation
           is_run_status: False
           table_storage: 1S
@@ -289,7 +295,7 @@ opcua:
           RouteName: "plc/app/Application/sym/GVL_HMI/bHMI_Status_DigiOut_XG2_OutA_gb"
           BrowseName: "Y3"
           Level: 8
-          update_interval: 1000     # miliseconds 
+          update_interval: 500     # miliseconds 
           variation_threshold: 0.05  # 5% of variation
           is_run_status: True
           table_storage: 1S
@@ -302,7 +308,7 @@ opcua:
           RouteName: "plc/app/Application/sym/GVL_HMI/bHMI_Steuern_DigiOut_XG2_OutA_gb"
           BrowseName: "Y3_S"
           Level: 8
-          update_interval: 1000      # miliseconds 
+          update_interval: 500      # miliseconds 
           variation_threshold: 0.05  # 5% of variation
           is_run_status: True
           table_storage: 1S
@@ -352,7 +358,7 @@ postgres:
   db: automax
   schema: sandbox
   table: ctrlx_data
-  write_interval: 60
+  write_interval: 120
   no_variation_publish: 60
-  batch_size: 100
-  initial_upload_duration: 20
+  batch_size: 10000
+  initial_upload_duration: 10
