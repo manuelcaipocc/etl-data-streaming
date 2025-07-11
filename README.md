@@ -260,7 +260,7 @@ src/
 
 The source code for this project is available in the following Bitbucket repository:
 
-[ETL Process - CtrlX Repository](https://sourcecode.socialcoding.bosch.com/projects/SSD6TRAINING/repos/etl-process---ctrl-x/browse)
+[ETL Process - CtrlX Repository](https://sourcecode.socialcoding.bosch.com/projects/SSD6TRAINING/repos/etl-ctrlx/browse)
 
 <p style="font-size: 12px; opacity: 0.5; text-align: left;">
     <a href="#table-of-contents">⬆ Back to Table of Contents</a>
