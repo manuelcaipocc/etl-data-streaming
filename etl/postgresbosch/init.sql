@@ -485,8 +485,93 @@ END;
 $$ LANGUAGE plpgsql;
 
 
-----------------------------------------------------------
--- Function to synchronize data from the temporary pivot table to the main pivot table
+-- ----------------------------------------------------------
+-- -- Function to synchronize data from the temporary pivot table to the main pivot table
+-- CREATE OR REPLACE FUNCTION sandbox.sync_ctrlx_pivot_table(frequency TEXT)
+-- RETURNS void AS $$
+-- DECLARE
+--     tmp_table TEXT;
+--     pivot_table TEXT;
+--     tmp_table_exists BOOLEAN;
+--     row_count INTEGER;
+--     column_list TEXT;
+-- BEGIN
+--     RAISE NOTICE 'Starting sync_ctrlx_pivot_table with frequency: %', frequency;
+
+--     IF frequency = '100mS' THEN
+--         tmp_table := 'sandbox.tmp_ctrlx_new_100ms';
+--         pivot_table := 'sandbox.ctrlx_pivot_100ms';
+--     ELSIF frequency = '500mS' THEN
+--         tmp_table := 'sandbox.tmp_ctrlx_new_500ms';
+--         pivot_table := 'sandbox.ctrlx_pivot_500ms';
+--     ELSIF frequency = '1S' THEN
+--         tmp_table := 'sandbox.tmp_ctrlx_new_1s';
+--         pivot_table := 'sandbox.ctrlx_pivot_1s';
+--     ELSIF frequency = '1M' THEN
+--         tmp_table := 'sandbox.tmp_ctrlx_new_1min';
+--         pivot_table := 'sandbox.ctrlx_pivot_1min';
+--     ELSE
+--         RAISE EXCEPTION 'Invalid frequency: %', frequency;
+--     END IF;
+
+--     RAISE NOTICE 'Temporary table: %, Pivot table: %', tmp_table, pivot_table;
+
+--     -- Check if the temporary table exists
+--     SELECT EXISTS (
+--         SELECT FROM information_schema.tables
+--         WHERE table_schema = 'sandbox'
+--         AND table_name = split_part(tmp_table, '.', 2)
+--     ) INTO tmp_table_exists;
+
+--     IF NOT tmp_table_exists THEN
+--         RAISE NOTICE 'Temporary table % does not exist. Skipping sync_ctrlx_pivot_table.', tmp_table;
+--         RETURN;
+--     END IF;
+
+--     -- Check if temporary table has rows
+--     EXECUTE format('SELECT COUNT(*) FROM %s', tmp_table) INTO row_count;
+
+--     IF row_count = 0 THEN
+--         RAISE NOTICE 'Temporary table % is empty. Skipping data insertion.', tmp_table;
+--         RETURN;
+--     END IF;
+
+--     RAISE NOTICE 'Ensuring pivot table has all necessary columns...';
+--     -- Ensure the main pivot table has all columns present in the temporary table
+--     PERFORM sandbox.ensure_columns_exist(pivot_table, tmp_table);
+
+--     -- Get ordered column list (timestamp first, then others alphabetically)
+--     SELECT string_agg(quote_ident(column_name), ', ')
+--     INTO column_list
+--     FROM (
+--         SELECT column_name
+--         FROM information_schema.columns
+--         WHERE table_schema = 'sandbox'
+--         AND table_name = split_part(tmp_table, '.', 2)
+--         ORDER BY CASE WHEN column_name = 'timestamp' THEN 0 ELSE 1 END,
+--                  column_name
+--     ) cols;
+
+--     RAISE NOTICE 'Inserting new data into pivot table % with column order: %', pivot_table, column_list;
+    
+--     -- Insert new data from the temporary table to the main pivot table with explicit column order
+--     EXECUTE format(
+--         'INSERT INTO %s (%s)
+--          SELECT %s
+--          FROM %s t
+--          WHERE NOT EXISTS (
+--              SELECT 1 FROM %s p WHERE p.timestamp = t.timestamp
+--          )',
+--         pivot_table, column_list, column_list, tmp_table, pivot_table
+--     );
+
+--     -- Reorder columns in the pivot table to maintain consistency
+--     PERFORM sandbox.reorder_table_columns(pivot_table);
+
+--     RAISE NOTICE 'sync_ctrlx_pivot_table for % completed successfully.', frequency;
+-- END;
+-- $$ LANGUAGE plpgsql;
+
 CREATE OR REPLACE FUNCTION sandbox.sync_ctrlx_pivot_table(frequency TEXT)
 RETURNS void AS $$
 DECLARE
@@ -495,9 +580,11 @@ DECLARE
     tmp_table_exists BOOLEAN;
     row_count INTEGER;
     column_list TEXT;
+    update_set_clause TEXT;
 BEGIN
     RAISE NOTICE 'Starting sync_ctrlx_pivot_table with frequency: %', frequency;
 
+    -- Seleccionar tablas según frecuencia
     IF frequency = '100mS' THEN
         tmp_table := 'sandbox.tmp_ctrlx_new_100ms';
         pivot_table := 'sandbox.ctrlx_pivot_100ms';
@@ -514,9 +601,7 @@ BEGIN
         RAISE EXCEPTION 'Invalid frequency: %', frequency;
     END IF;
 
-    RAISE NOTICE 'Temporary table: %, Pivot table: %', tmp_table, pivot_table;
-
-    -- Check if the temporary table exists
+    -- Verificar que exista la tabla temporal
     SELECT EXISTS (
         SELECT FROM information_schema.tables
         WHERE table_schema = 'sandbox'
@@ -524,54 +609,59 @@ BEGIN
     ) INTO tmp_table_exists;
 
     IF NOT tmp_table_exists THEN
-        RAISE NOTICE 'Temporary table % does not exist. Skipping sync_ctrlx_pivot_table.', tmp_table;
+        RAISE NOTICE 'Temporary table % does not exist. Skipping sync.', tmp_table;
         RETURN;
     END IF;
 
-    -- Check if temporary table has rows
+    -- Verificar si hay datos nuevos
     EXECUTE format('SELECT COUNT(*) FROM %s', tmp_table) INTO row_count;
-
     IF row_count = 0 THEN
-        RAISE NOTICE 'Temporary table % is empty. Skipping data insertion.', tmp_table;
+        RAISE NOTICE 'Temporary table % is empty. Skipping.', tmp_table;
         RETURN;
     END IF;
 
-    RAISE NOTICE 'Ensuring pivot table has all necessary columns...';
-    -- Ensure the main pivot table has all columns present in the temporary table
+    -- Asegurar columnas necesarias en la pivot
     PERFORM sandbox.ensure_columns_exist(pivot_table, tmp_table);
 
-    -- Get ordered column list (timestamp first, then others alphabetically)
+    -- Obtener lista de columnas ordenadas
     SELECT string_agg(quote_ident(column_name), ', ')
     INTO column_list
     FROM (
         SELECT column_name
         FROM information_schema.columns
         WHERE table_schema = 'sandbox'
-        AND table_name = split_part(tmp_table, '.', 2)
+          AND table_name = split_part(tmp_table, '.', 2)
         ORDER BY CASE WHEN column_name = 'timestamp' THEN 0 ELSE 1 END,
                  column_name
     ) cols;
 
-    RAISE NOTICE 'Inserting new data into pivot table % with column order: %', pivot_table, column_list;
-    
-    -- Insert new data from the temporary table to the main pivot table with explicit column order
+    -- Construir dinámicamente la cláusula SET para ON CONFLICT
+    SELECT string_agg(format('%I = EXCLUDED.%I', column_name, column_name), ', ')
+    INTO update_set_clause
+    FROM (
+        SELECT column_name
+        FROM information_schema.columns
+        WHERE table_schema = 'sandbox'
+          AND table_name = split_part(tmp_table, '.', 2)
+          AND column_name <> 'timestamp'
+        ORDER BY column_name
+    ) sub;
+
+    -- Hacer UPSERT: insertar o actualizar si existe el timestamp
     EXECUTE format(
         'INSERT INTO %s (%s)
-         SELECT %s
-         FROM %s t
-         WHERE NOT EXISTS (
-             SELECT 1 FROM %s p WHERE p.timestamp = t.timestamp
-         )',
-        pivot_table, column_list, column_list, tmp_table, pivot_table
+         SELECT %s FROM %s t
+         ON CONFLICT (timestamp)
+         DO UPDATE SET %s',
+        pivot_table, column_list, column_list, tmp_table, update_set_clause
     );
 
-    -- Reorder columns in the pivot table to maintain consistency
+    -- Reordenar columnas
     PERFORM sandbox.reorder_table_columns(pivot_table);
 
     RAISE NOTICE 'sync_ctrlx_pivot_table for % completed successfully.', frequency;
 END;
 $$ LANGUAGE plpgsql;
-
 
 
 --Unique Variables 

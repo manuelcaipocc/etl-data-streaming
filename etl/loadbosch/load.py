@@ -244,6 +244,50 @@ def database_writer():
                     except Exception as e:
                         logger.error(f"Unexpected error in database_writer: {e}")
 
+def buffer_content_monitor(interval=5):
+    """
+    Displays the latest record per unique BrowseName from the buffer every N seconds.
+    This ensures we always see at least one value per distinct variable.
+    Highlights invalid or missing values with a WARNING.
+    """
+    global data_buffer
+    while True:
+        time.sleep(interval)
+        with buffer_lock:
+            buffer_size = len(data_buffer)
+            if buffer_size == 0:
+                logger.info("[BUFFER MONITOR] Buffer is empty.")
+                continue
+
+            # Build a dict of the latest record per BrowseName
+            latest_by_variable = {}
+            for record in reversed(data_buffer):  # Start from the newest records
+                browse_name = record.get("BrowseName", "UNKNOWN")
+                if browse_name not in latest_by_variable:
+                    latest_by_variable[browse_name] = record
+
+            logger.info(f"[BUFFER MONITOR] Total in buffer: {buffer_size} records "
+                        f"covering {len(latest_by_variable)} unique variables:")
+
+            # Print one representative record per variable
+            for idx, (browse_name, record) in enumerate(latest_by_variable.items(), start=1):
+                try:
+                    value = record.get("Value", "N/A")
+                    timestamp = record.get("Timestamp", "N/A")
+
+                    # Highlight invalid values
+                    if value in (None, "", "nan") or str(value).lower() in ("nan", "none"):
+                        logger.warning(
+                            f"   #{idx} → BrowseName={browse_name} | INVALID Value={value} | Timestamp={timestamp}"
+                        )
+                    else:
+                        logger.info(
+                            f"   #{idx} → BrowseName={browse_name} | Value={value} | Timestamp={timestamp}"
+                        )
+                except Exception as e:
+                    logger.error(f"[BUFFER MONITOR] Error displaying record: {e}")
+
+
 
 if __name__ == "__main__":
     manager = ConnectionManager() 
@@ -263,6 +307,8 @@ if __name__ == "__main__":
     start_time = time.time() 
     threading.Thread(target=database_writer, daemon=True).start()
     logger.info("Listening for messages on transformed_data...")
+
+    threading.Thread(target=buffer_content_monitor, args=(5,), daemon=True).start()
 
     try:
         while True:
