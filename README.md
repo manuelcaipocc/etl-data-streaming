@@ -101,7 +101,7 @@ etl_project/
 └── README.md                    # Project documentation
 ```
 <p style="font-size: 12px; opacity: 0.5; text-align: left;">
-    <a href="#table-of-contents">⬆ Back to Table of Contents</a>
+    <a href="#table-of-contents">Back to Table of Contents</a>
 </p>
 
 ## 2. Prerequisites
@@ -113,7 +113,7 @@ To run this project, ensure you have the following installed:
 - **Docker**: Container orchestration
 
 <p style="font-size: 12px; opacity: 0.5; text-align: left;">
-    <a href="#table-of-contents">⬆ Back to Table of Contents</a>
+    <a href="#table-of-contents">Back to Table of Contents</a>
 </p>
 
 ## 3. Execution
@@ -125,7 +125,7 @@ To start the ETL pipeline, execute the following commands:
 docker-compose up -d
 ```
 <p style="font-size: 12px; opacity: 0.5; text-align: left;">
-    <a href="#table-of-contents">⬆ Back to Table of Contents</a>
+    <a href="#table-of-contents">Back to Table of Contents</a>
 </p>
 
 ## 4. User and Password Verification
@@ -133,7 +133,7 @@ docker-compose up -d
 To verify the necessary users and passwords to access and use the service on the host, check the **`docker-compose.yaml`** file.
 
 <p style="font-size: 12px; opacity: 0.5; text-align: left;">
-    <a href="#table-of-contents">⬆ Back to Table of Contents</a>
+    <a href="#table-of-contents">Back to Table of Contents</a>
 </p>
 
 ## 5. Configuration File (config.yaml)
@@ -239,7 +239,7 @@ postgres:
 - **batch_size**: Number of records per batch insertion.
 
 <p style="font-size: 12px; opacity: 0.5; text-align: left;">
-    <a href="#table-of-contents">⬆ Back to Table of Contents</a>
+    <a href="#table-of-contents">Back to Table of Contents</a>
 </p>
 
 ## 6. Testing OPC UA Connection
@@ -253,7 +253,7 @@ src/
 └── nodos_opcua.json   # Extracted OPC UA nodes
 ```
 <p style="font-size: 12px; opacity: 0.5; text-align: left;">
-    <a href="#table-of-contents">⬆ Back to Table of Contents</a>
+    <a href="#table-of-contents">Back to Table of Contents</a>
 </p>
 
 ## 7. Repository
@@ -263,7 +263,7 @@ The source code for this project is available in the following Bitbucket reposit
 [ETL Process - CtrlX Repository](https://sourcecode.socialcoding.bosch.com/projects/SSD6TRAINING/repos/etl-ctrlx/browse)
 
 <p style="font-size: 12px; opacity: 0.5; text-align: left;">
-    <a href="#table-of-contents">⬆ Back to Table of Contents</a>
+    <a href="#table-of-contents">Back to Table of Contents</a>
 </p>
 
 
@@ -338,10 +338,10 @@ For any inquiries regarding the project, please contact the main users:
 | **Main User** | **Responsibilities** |
 |--------------|----------------------|
 | **Caipo Manuel (DC/SSD3)**          | Working Student / Developer |
-| **Guedria Mohamed Amine (DC/SSD6)** | Trainer / SW Engineer |
+
 
 
 <p style="font-size: 12px; opacity: 0.5; text-align: left;">
-    <a href="#table-of-contents">⬆ Back to Table of Contents</a>
+    <a href="#table-of-contents">Back to Table of Contents</a>
 </p>
 
