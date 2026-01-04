@@ -18,6 +18,7 @@ __pycache__/
 # Jupyter Notebook
 .ipynb_checkpoints
 .ipynb
+1_connection opcua get nodes.ipynb
 
 # pyenv
 .python-version
