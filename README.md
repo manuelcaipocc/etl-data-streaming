@@ -1,4 +1,4 @@
-# ETL Project for CtrlX (Bosch Rexroth)
+# ETL Project for CtrlX (PLC)
 
 This application allows extracting data from any **CtrlX (Bosch Rexroth)** to a database. Currently, the data is stored in a local **PostgreSQL** database, but it can be easily migrated to a cloud service without issues.
 
